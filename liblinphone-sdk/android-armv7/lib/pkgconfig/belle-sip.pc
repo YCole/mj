@@ -1,0 +1,13 @@
+# This is a comment
+prefix=/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-armv7
+exec_prefix=/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-armv7/bin
+includedir=/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-armv7/include
+
+Name: belle-sip 
+Description: A c based implementation of the SIP (RFC 3261)  telephony protocol 
+Requires: bctoolbox
+Requires.private:  z 
+Version: 1.6.3
+Libs: -L/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-armv7/lib -lbellesip
+Libs.private:  -L -lbctoolbox -ldl
+Cflags: -I/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-armv7/include 

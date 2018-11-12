@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/topLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/call_default_bg">
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:padding="15dp"
+        android:text="@string/now_audio_call"
+        android:background="@drawable/call_default_bg"
+        style="@style/font5" />
+
+    <SurfaceView
+        android:id="@+id/videoCaptureSurface"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <RelativeLayout
+        android:id="@+id/contact_detail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/menu"
+        android:paddingTop="10dp">
+
+        <LinearLayout
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="15dp"
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+
+            <ImageView
+                android:id="@+id/contact_picture"
+                android:src="@drawable/avatar"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="15dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:adjustViewBounds="true"
+                />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/contact_name"
+                    style="@style/font5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true" />
+
+                <TextView
+                    android:text="@string/outgoing_call"
+                    style="@style/font2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:gravity="center"/>
+
+                <TextView
+                    android:visibility="gone"
+                    android:id="@+id/contact_number"
+                    style="@style/font2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/contact_name"
+                    android:layout_gravity="center"
+                    android:layout_centerHorizontal="true"
+                    android:paddingBottom="10dp"/>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+    <LinearLayout
+        android:id="@+id/menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="100dp"
+        android:orientation="vertical" >
+
+        <ImageView
+            android:id="@+id/micro"
+            android:visibility="gone"
+            android:src="@drawable/micro_default"
+            android:contentDescription="@string/content_description_toggle_micro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"/>
+
+        <ImageView
+            android:id="@+id/speaker"
+            android:visibility="gone"
+            android:src="@drawable/speaker_default"
+            android:contentDescription="@string/content_description_toggle_speaker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="15dp"/>
+
+        <ImageView
+            android:id="@+id/outgoing_hang_up"
+            android:src="@drawable/call_hangup"
+            android:contentDescription="@string/content_description_hang_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"/>
+
+        <TextView
+            style="@style/font2"
+            android:text="@string/hang_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+    </LinearLayout>
+
+</RelativeLayout>

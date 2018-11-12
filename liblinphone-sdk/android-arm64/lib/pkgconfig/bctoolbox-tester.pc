@@ -1,0 +1,9 @@
+# This is a comment
+prefix=/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-arm64
+exec_prefix=/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-arm64
+Name:  bctoolbox-tester
+Description: A common set of tester wrappers used by Belledonne Communications's softwares
+Requires.private: bcunit
+Version: 0.6.0
+Libs: -L/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-arm64/lib -lbctoolbox-tester
+Cflags: -I/home/zhanghao/cole/vendor/customer/gome_src/BeautyMirror_IUV/liblinphone-sdk/android-arm64/include

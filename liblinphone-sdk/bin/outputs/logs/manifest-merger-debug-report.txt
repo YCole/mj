@@ -1,0 +1,35 @@
+-- Merging decision tree log ---
+manifest
+ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:1-9:12
+	package
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:2:11-38
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+	android:versionName
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:6:11-38
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+	xmlns:android
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:3:11-69
+	android:versionCode
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:5:11-37
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+	android:installLocation
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:4:11-41
+uses-sdk
+ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:8:5-46
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:8:5-46
+INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:8:5-46
+	android:targetSdkVersion
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:8:15-44
+	android:minSdkVersion
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml
+		ADDED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml:8:5-46
+		INJECTED from X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\liblinphone-sdk\AndroidManifestLibrary.xml

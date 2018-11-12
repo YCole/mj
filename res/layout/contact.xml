@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@color/colorF"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="120dp"
+                android:paddingBottom="50dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:id="@+id/avatar_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/contact_picture"
+                        android:src="@drawable/avatar"
+                        android:contentDescription="@string/content_description_contact_picture"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:adjustViewBounds="true"
+                        android:layout_alignParentLeft="true"/>
+
+                    <ImageView
+                        android:id="@+id/mask"
+                        android:visibility="gone"
+                        android:src="@drawable/avatar_mask"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:adjustViewBounds="true"
+                        android:layout_alignParentLeft="true"/>
+
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/contact_name"
+                    style="@style/font7"
+                    android:maxLines="1"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:id="@+id/nick_name"
+                    style="@style/font9"
+                    android:maxLines="1"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:id="@+id/add_remark_cell"
+                android:layout_marginTop="10dp"
+                android:layout_height="50dp"
+                android:orientation="horizontal">
+                <TextView
+                    style="@style/font8"
+                    android:maxLines="1"
+                    android:layout_gravity="left|center_vertical"
+                    android:text="@string/remark_name"
+                    android:layout_marginLeft="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:id="@+id/add_remark_name"
+                    style="@style/font9"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="50dp"
+                    android:text="@string/add_remark_name"
+                    android:layout_height="wrap_content"/>
+
+                <ImageView
+                    android:src="@drawable/contact_next_right"
+                    android:layout_gravity="right|center_vertical"
+                    android:layout_marginRight="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="50dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:background="@color/colorG"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/font8"
+                        android:maxLines="1"
+                        android:text="账号"
+                        android:layout_marginLeft="10dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        style="@style/font9"
+                        android:id="@+id/tv_account"
+                        android:maxLines="1"
+                        android:layout_width="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:text="18756748970"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    >
+                    <ImageView
+                        android:id="@+id/vedio_call_account"
+                        android:src="@drawable/camera_default"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:adjustViewBounds="true"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginRight="15dp"
+                        />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/font8"
+                        android:maxLines="1"
+                        android:text="设备"
+                        android:layout_marginLeft="10dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        style="@style/font9"
+                        android:id="@+id/tv_device"
+                        android:maxLines="1"
+                        android:layout_width="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:text="Ann的设备"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    >
+                    <ImageView
+                        android:id="@+id/vedio_call_device"
+                        android:src="@drawable/camera_default"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:adjustViewBounds="true"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginRight="15dp"
+                        />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/recent_call"
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="50dp"
+                android:orientation="horizontal">
+                <TextView
+                    style="@style/font8"
+                    android:layout_gravity="left|center_vertical"
+                    android:text="最近通话"
+                    android:layout_marginLeft="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    >
+                    <ImageView
+                        android:src="@drawable/contact_next_right"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginRight="10dp"
+                        />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:background="@color/colorG"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="50dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/deleteContact"
+                    android:text="@string/remove_contact"
+                    style="@style/font8"
+                    android:contentDescription="@string/content_description_delete"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

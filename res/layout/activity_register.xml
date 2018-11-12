@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+
+    <cole.view.MyActionBar
+        android:id="@+id/actionbar_register"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingLeft="50dp"
+        android:paddingRight="50dp">
+
+
+        <LinearLayout
+            android:id="@+id/phone_number"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/botton_white_rectangle_background"
+            android:orientation="horizontal"
+            android:padding="7dp">
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:paddingLeft="10dp"
+                android:text="+86"
+                android:textSize="20sp" />
+
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:background="@color/gray" />
+
+            <cole.view.ClearEditText
+                android:id="@+id/et_register_getphone"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:gravity="center"
+                android:hint="@string/et_register_getphone"
+                android:maxLength="11"
+                android:maxLines="1"
+                android:singleLine="true" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/ll_getCodeNumber"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/phone_number"
+            android:layout_centerInParent="true"
+
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+
+            <EditText
+                android:id="@+id/et_register_codeNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="10dp"
+                android:layout_weight="1.5"
+                android:background="@drawable/botton_white_rectangle_background"
+                android:gravity="center"
+                android:hint="@string/et_register_getcode"
+                android:maxLength="6"
+                android:maxLines="1"
+                android:singleLine="true" />
+
+            <Button
+                android:id="@+id/bt_register_getCodeNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1.3"
+                android:background="@drawable/botton_orange_rectangle_background"
+                android:gravity="center"
+                android:onClick="onClick"
+                android:text="@string/bt_register_getcode" />
+
+        </LinearLayout>
+
+
+        <EditText
+
+            android:id="@+id/et_register_setPassword"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/botton_white_rectangle_background"
+            android:gravity="center"
+            android:hint="@string/et_register_password"
+            android:maxLength="16"
+            android:maxLines="1"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/bt_register_goToRegister"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/botton_white_rectangle_background"
+            android:gravity="center"
+            android:text="@string/register" />
+
+
+        <RelativeLayout
+            android:id="@+id/rl_readAndAgree"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <CheckBox
+
+                android:id="@+id/cb_register_readAndAgree"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@+id/tv_register_readAndGgree"
+                android:layout_toLeftOf="@+id/tv_register_readAndGgree"
+                android:checked="true" />
+
+            <TextView
+                android:id="@+id/tv_register_readAndGgree"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+
+                android:text="@string/tv_register_readAndGgree" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+
+
+            android:id="@+id/rl_register_protocolAndPrivacy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/rl_readAndAgree"
+            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:visibility="gone">
+
+            <TextView
+
+
+                android:id="@+id/tv_protocol"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="0dp"
+                android:text="@string/protocolAndPrivacy" />
+
+
+        </RelativeLayout>
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

@@ -1,0 +1,2 @@
+# Referenced at X:\cole\vendor\customer\gome_src\BeautyMirror_IUV\bin\intermediates\manifests\full\debug\AndroidManifest.xml:63
+-keep class cole.MyApp { <init>(...); }

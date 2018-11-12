@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.gome.beautymirror.ui.SlidingButtonView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:layout_marginBottom="1dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/history_delete"
+            android:layout_height="50dp"
+            android:layout_width="80dp"
+            android:gravity="center"
+            android:layout_toRightOf="@+id/layout_content"
+            android:text="@string/delete_history"
+            android:background="#FF0000"
+            android:layout_alignParentBottom="true"
+            android:textColor="#DDFFFFFF" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:id="@+id/layout_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <include layout="@layout/history_cell"
+                android:id="@+id/history_cell_content"
+                />
+        </LinearLayout>
+    </RelativeLayout>
+
+</com.gome.beautymirror.ui.SlidingButtonView>
