@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:imagecontrol="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -22,14 +23,13 @@
         </LinearLayout>
 
         <RelativeLayout
-            android:background="@color/colorH"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:paddingTop="13dp"
             android:paddingBottom="13dp">
 
-            <ImageView
+            <com.gome.beautymirror.ui.RoundImageView
                 android:id="@+id/contact_picture"
                 android:src="@drawable/image_head"
                 android:contentDescription="@string/content_description_contact_picture"
@@ -37,7 +37,9 @@
                 android:layout_height="42dp"
                 android:adjustViewBounds="true"
                 android:layout_alignParentLeft="true"
-                android:layout_marginLeft="20dp"/>
+                android:layout_marginLeft="20dp"
+                imagecontrol:border_width="3px"
+                imagecontrol:border_inside_color="#FFD7DDFF" />
 
             <CheckBox
                 android:id="@+id/delete"
@@ -96,6 +98,7 @@
                     android:layout_alignParentTop="true"/>
                 <TextView
                     android:id="@+id/sip_uri"
+                    android:layout_marginTop="2dp"
                     style="@style/contact_account_font"
                     android:lines="1"
                     android:ellipsize="end"
@@ -138,13 +141,13 @@
     <TextView
         android:id="@+id/contact_count"
         android:layout_width="match_parent"
-        android:layout_height="45dp"
+        android:layout_height="30dp"
         android:gravity="center_horizontal"
         android:paddingTop="8dp"
-        style="@style/font6"
-        android:background="@color/colorG"
-        />
-
-
+        android:paddingBottom="8dp"
+        android:textSize="12sp"
+        android:textColor="@color/icon_more"
+        android:background="#FFFAFBFC"
+        android:fontFamily="FZLTHK--GBK1-0" />
 
 </LinearLayout>

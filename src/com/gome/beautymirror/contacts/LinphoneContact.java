@@ -57,11 +57,13 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
     private transient ArrayList<ContentProviderOperation> changesToCommit;
     private transient ArrayList<ContentProviderOperation> changesToCommit2;
     private boolean hasSipAddress;
+    private String account;
     //联系人名称的首字母
     private String letter;
     private String remarkName;
     private String devices;
     private long time;
+    private byte[] icon;
 
     public LinphoneContact() {
         addresses = new ArrayList<com.gome.beautymirror.contacts.LinphoneNumberOrAddress>();
@@ -75,9 +77,20 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
 
     @Override
     public int compareTo(LinphoneContact contact) {
+        String account = getAccount() != null ? getAccount().toUpperCase(Locale.getDefault()) : "";
+        String contactAccount = contact.getAccount() != null ? contact.getAccount().toUpperCase(Locale.getDefault()) : "";
+        if (!account.equals(contactAccount)) {
+            return account.compareTo(contactAccount);
+        }
         String fullName = getFullName() != null ? getFullName().toUpperCase(Locale.getDefault()) : "";
         String contactFullName = contact.getFullName() != null ? contact.getFullName().toUpperCase(Locale.getDefault()) : "";
         if (fullName.equals(contactFullName)) {
+            String remarkName = getRemarkName() != null ? getRemarkName().toUpperCase(Locale.getDefault()) : "";
+            String contactRemarkName = contact.getRemarkName() != null ? contact.getRemarkName().toUpperCase(Locale.getDefault()) : "";
+            if (!remarkName.equals(contactRemarkName)) {
+                return remarkName.compareTo(contactRemarkName);
+            }
+
             if (getAndroidId() != null) {
                 if (contact.getAndroidId() != null) {
                     return getAndroidId().compareTo(contact.getAndroidId());
@@ -88,6 +101,14 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
             return 0;
         }
         return fullName.compareTo(contactFullName);
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     public String getLetter() {
@@ -104,6 +125,14 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
 
     public void setRemarkName(String remarkName) {
         this.remarkName = remarkName;
+    }
+
+    public byte[] getIcon() {
+        return icon;
+    }
+
+    public void setIcon(byte[] icon) {
+        this.icon = icon;
     }
 
 

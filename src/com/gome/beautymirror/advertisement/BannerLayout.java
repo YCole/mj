@@ -60,6 +60,8 @@ public class BannerLayout extends RelativeLayout {
 
     private int indicatorSpace = 3;
     private int indicatorMargin = 10;
+    private int indicatorMarginRight = 20;
+    private int indicatorMarginBottom = 20;
 
     private int currentPosition;
 
@@ -144,6 +146,8 @@ public class BannerLayout extends RelativeLayout {
         }
         indicatorSpace = (int) array.getDimension(R.styleable.BannerLayoutStyle_indicatorSpace, indicatorSpace);
         indicatorMargin = (int) array.getDimension(R.styleable.BannerLayoutStyle_indicatorMargin, indicatorMargin);
+        indicatorMarginRight = (int) array.getDimension(R.styleable.BannerLayoutStyle_indicatorMarginRight, indicatorMarginRight);
+        indicatorMarginBottom = (int) array.getDimension(R.styleable.BannerLayoutStyle_indicatorMarginBottom, indicatorMarginBottom);
         autoPlayDuration = array.getInt(R.styleable.BannerLayoutStyle_autoPlayDuration, autoPlayDuration);
         scrollDuration = array.getInt(R.styleable.BannerLayoutStyle_scrollDuration, scrollDuration);
         isAutoPlay = array.getBoolean(R.styleable.BannerLayoutStyle_isAutoPlay, isAutoPlay);
@@ -206,8 +210,8 @@ public class BannerLayout extends RelativeLayout {
     }
 
     @NonNull
-    private ImageView getImageView(String url, final int position) {
-        ImageView imageView = new ImageView(getContext());
+    private com.gome.beautymirror.ui.RoundImageView getImageView(String url, final int position) {
+        com.gome.beautymirror.ui.RoundImageView imageView = new com.gome.beautymirror.ui.RoundImageView(getContext(),false);
         imageView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -272,7 +276,7 @@ public class BannerLayout extends RelativeLayout {
                 break;
         }
         //设置margin
-        params.setMargins(indicatorMargin, indicatorMargin, indicatorMargin, indicatorMargin);
+        params.setMargins(indicatorMargin, indicatorMargin, indicatorMarginRight, indicatorMarginBottom);
         //添加指示器容器布局到SliderLayout
         addView(indicatorContainer, params);
 

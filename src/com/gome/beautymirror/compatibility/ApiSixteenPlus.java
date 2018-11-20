@@ -116,7 +116,7 @@ public class ApiSixteenPlus {
         Notification notif = new Notification.Builder(context)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setSmallIcon(R.drawable.call_status_missed)
+                .setSmallIcon(R.drawable.ic_call_miss)
                 .setAutoCancel(true)
                 .setContentIntent(intent)
                 .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)

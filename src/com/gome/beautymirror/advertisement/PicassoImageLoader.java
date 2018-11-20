@@ -12,6 +12,7 @@ public class PicassoImageLoader implements BannerLayout.ImageLoader {
     public void displayImage(Context context, String path, ImageView imageView) {
         Glide.with(context)
                 .load(path)
+                .asBitmap()
                 .placeholder(R.mipmap.ic_launcher)
                 .error(R.mipmap.ic_launcher)
                 .into(imageView);

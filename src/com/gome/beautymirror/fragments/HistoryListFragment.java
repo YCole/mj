@@ -19,6 +19,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -32,7 +34,9 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.gome.beautymirror.LinphoneManager;
@@ -64,7 +68,7 @@ import android.content.IntentFilter;
 
 public class HistoryListFragment extends Fragment implements OnClickListener, OnItemClickListener, CallHistoryAdapter.ViewHolder.ClickListener, ContactsUpdatedListener, SelectableHelper.DeleteListener {
     private RecyclerView historyList;
-    private TextView noCallHistory;
+    private LinearLayout noCallHistory;
     private ImageView edit;
      private ArrayList<Object> mLogs;
     private LinkedHashMap <Object,Integer> showLogs;
@@ -73,6 +77,10 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
     private LinearLayoutManager mLayoutManager;
     private Context mContext;
     private SelectableHelper mSelectionHelper;
+    private LinearLayout mActionBar,mLlOpenSysNotification;
+    private ImageView mCloseMessage;
+    private Button mOpenSysNotification;
+    private boolean isClose;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -89,9 +97,14 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         historyList.setLayoutManager(mLayoutManager);
 
         edit = view.findViewById(R.id.edit);
-
-
-
+        mCloseMessage = view.findViewById(R.id.close_message);
+        mOpenSysNotification = view.findViewById(R.id.btn_open_sys_notification);
+        mLlOpenSysNotification = view.findViewById(R.id.ll_open_sys_notification);
+        mCloseMessage.setOnClickListener(this);
+        mOpenSysNotification.setOnClickListener(this);
+        mActionBar = view.findViewById(R.id.action_bar);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
         return view;
     }
 
@@ -191,6 +204,8 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_TIME_TICK);
         mContext.registerReceiver(mReceiver, filter);
+
+        mLlOpenSysNotification.setVisibility(isClose ? View.GONE :View.VISIBLE);
     }
 
 
@@ -242,6 +257,21 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
             historyList.setAdapter(mHistoryAdapter);
             mSelectionHelper.setAdapter(mHistoryAdapter);
             mSelectionHelper.setDialogMessage(R.string.chat_room_delete_dialog);
+        }
+        if(id == R.id.close_message){
+            isClose = true;
+            mLlOpenSysNotification.setVisibility(View.GONE);
+        }else if(id == R.id.btn_open_sys_notification){
+            Intent localIntent = new Intent();
+            localIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (Build.VERSION.SDK_INT >= 9) {
+                localIntent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+                localIntent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
+            } else if (Build.VERSION.SDK_INT <= 8) {
+                localIntent.setAction(Intent.ACTION_VIEW);
+                localIntent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
+                localIntent.putExtra("com.android.settings.ApplicationPkgName",  getContext().getPackageName());
+            }
         }
 
     }

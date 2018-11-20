@@ -3,83 +3,159 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorC"
+    android:background="#fff"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/main_search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/search_phonenum_layout"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="60dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/search_box_bg"
-            android:gravity="center_vertical">
+            android:id="@+id/search_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg"
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:scaleType="center"
-                android:src="@mipmap/ic_search"
-                tools:ignore="ContentDescription" />
-
-            <EditText
-                android:id="@+id/et_search_number"
+            <LinearLayout
+                android:id="@+id/search_root"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@null"
-                android:gravity="center_vertical"
-                android:hint="@string/enter_phonenum_search"
-                android:inputType="text"
-                android:singleLine="true"
-                android:textColor="@color/gray"
-                android:textColorHint="@color/gray"
-                android:textSize="14sp"
-                tools:ignore="RtlHardcoded" />
+                android:layout_height="35dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:background="@drawable/search_box_bg"
+                android:gravity="center_vertical">
 
-            <ImageView
-                android:id="@+id/search_clear_num"
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_icon_search"
+                    tools:ignore="ContentDescription" />
+
+                <EditText
+                    android:id="@+id/et_search_number"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:gravity="center_vertical"
+                    android:hint="@string/input_search_contact"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:textColor="@color/serach_text"
+                    android:textSize="13sp"
+                    tools:ignore="RtlHardcoded" />
+
+                <ImageView
+                    android:id="@+id/search_clear_num"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:src="@drawable/search_ic_del"
+                    android:visibility="gone"
+                    tools:ignore="ContentDescription" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/bt_cancle_search"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:src="@mipmap/ic_search_clear"
-                android:visibility="gone"
-                tools:ignore="ContentDescription" />
+                android:layout_height="35dp"
+                android:layout_marginRight="12dp"
+                android:gravity="center_vertical"
+                android:text="@string/cancle_search"
+                android:textSize="13dp"
+                android:layout_marginTop="16dp"
+                android:fontFamily="FZLTHK--GBK1-0"
+                android:textColor="@android:color/white" />
+
         </LinearLayout>
 
-        <Button
-            android:id="@+id/bt_cancle_search"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#0000"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:text="@string/cancle_search"
-            android:textColor="@android:color/white" />
+        <LinearLayout
+            android:orientation="vertical"
+            android:background="@drawable/bg_contact"
+            android:layout_marginTop="-160dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/bt_search"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/text_search_phone"
-            android:textColor="@android:color/white" />
-    </RelativeLayout>
+            <LinearLayout
+                android:id="@+id/ll_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:orientation="horizontal">
 
+                <ImageView
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginTop="13dp"
+                    android:layout_marginBottom="13dp"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="20dp"
+                    android:src="@drawable/list_icon_search"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/search_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="center|left"
+                        style="@style/contact_name_font"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1px"
+                        android:background="@color/divider_line_color"
+                        android:layout_marginRight="20dp"/>
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:id="@+id/no_User"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:layout_width="132dp"
+                    android:layout_height="132dp"
+                    android:layout_marginLeft="114dp"
+                    android:layout_marginRight="114dp"
+                    android:layout_marginTop="85dp"
+                    android:src="@drawable/empty_nouser" />
+
+                <TextView
+                    android:text="该用户不存在"
+                    style="@style/empty_font"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_centerVertical="true"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/main_content"
@@ -94,95 +170,149 @@
             android:layout_height="wrap_content"
             android:background="@color/colorC" />
 
-        <RelativeLayout
-            android:id="@+id/rl_search_phonenumber"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@color/colorE"
-            android:padding="10dp">
-
-            <TextView
-                android:id="@+id/tv_phone_contact"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:text="@string/text_search_phonenumber"
-                android:textColor="@color/colorH"
-                android:textSize="18sp" />
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:background="@color/colorH"
-                android:src="@drawable/contact_next_right" />
-
-        </RelativeLayout>
-
         <LinearLayout
-            android:id="@+id/search_root"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/search_box_bg"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:scaleType="center"
-                android:src="@mipmap/ic_search"
-                tools:ignore="ContentDescription" />
-
-            <EditText
-                android:id="@+id/et_search"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@null"
-                android:gravity="center_vertical"
-                android:hint="@string/input_search_contact"
-                android:inputType="text"
-                android:singleLine="true"
-                android:textColor="@color/gray"
-                android:textColorHint="@color/gray"
-                android:textSize="14sp"
-                tools:ignore="RtlHardcoded" />
-
-            <ImageView
-                android:id="@+id/iv_search_clear"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:src="@mipmap/ic_search_clear"
-                android:visibility="gone"
-                tools:ignore="ContentDescription" />
-        </LinearLayout>
-
-
-        <RelativeLayout
+            android:orientation="vertical"
+            android:background="@drawable/bg_contact"
+            android:layout_marginTop="-116dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/recycler_view"
+            <RelativeLayout
+                android:id="@+id/rl_search_phonenumber"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingBottom="13dp"
+                android:paddingTop="13dp">
 
-            <ProgressBar
-                android:id="@+id/pb"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_centerInParent="true" />
+                <TextView
+                    android:id="@+id/tv_phone_contact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:text="@string/text_search_phonenumber"
+                    android:textColor="#E6000000"
+                    android:textSize="15sp"
+                    android:fontFamily="FZLTHK--GBK1-0"/>
 
-        </RelativeLayout>
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="20dp"
+                    android:src="@drawable/ic_icon_more" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <FrameLayout
+                    android:id="@+id/list_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="vertical"
+                    >
+                    <!--android:fastScrollAlwaysVisible="true"-->
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        />
+                    <include layout="@layout/contact_sticky_header" />
+
+                </FrameLayout>
+
+                <ProgressBar
+                    android:id="@+id/pb"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_centerInParent="true" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="15dp"
+                    android:background="#FFF5F8FA"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:id="@+id/no_register_user"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <ImageView
+                        android:layout_width="132dp"
+                        android:layout_height="132dp"
+                        android:layout_marginLeft="114dp"
+                        android:layout_marginRight="114dp"
+                        android:layout_marginTop="85dp"
+                        android:src="@drawable/empty_nouser" />
+
+                    <TextView
+                        android:text="@string/no_register_user"
+                        style="@style/empty_font"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="5dp"
+                        android:layout_centerVertical="true"/>
+
+                    <TextView
+                        android:id="@+id/goto_messages"
+                        android:text="@string/to_message"
+                        style="@style/link_font"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_below="@+id/noContact"
+                        android:layout_marginTop="5dp"
+                        android:layout_centerVertical="true"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:id="@+id/no_permission"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="@string/no_contact_permisson"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="98dp"
+                        android:layout_centerVertical="true"
+                        android:textColor="#73000000"
+                        android:textSize="15sp"/>
+
+                    <TextView
+                        android:text="@string/setting_permisson"
+                        android:textColor="#1F000000"
+                        android:textSize="12sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="5dp"
+                        android:layout_centerVertical="true"/>
+
+                    <TextView
+                        android:id="@+id/goto_settings"
+                        android:text="@string/to_settings"
+                        style="@style/link_font"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_below="@+id/noContact"
+                        android:layout_marginTop="5dp"
+                        android:layout_centerVertical="true"/>
+                </LinearLayout>
+
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
     </LinearLayout>
+
 </LinearLayout>

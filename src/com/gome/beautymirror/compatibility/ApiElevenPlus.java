@@ -155,7 +155,7 @@ public class ApiElevenPlus {
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(intent)
-                .setSmallIcon(R.drawable.call_status_missed)
+                .setSmallIcon(R.drawable.ic_call_miss)
                 .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                 .setWhen(System.currentTimeMillis()).getNotification();

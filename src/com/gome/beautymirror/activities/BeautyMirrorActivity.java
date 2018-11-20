@@ -25,6 +25,8 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Dialog;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -120,12 +122,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 
 import com.gome.beautymirror.activities.BeautyMirrorGenericActivity;
 import com.gome.beautymirror.data.DataService;
+import com.gome.beautymirror.data.DataUtil;
 import com.gome.beautymirror.contacts.LinphoneContact;
 
 import cole.utils.SaveUtils;
@@ -209,7 +214,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         //This must be done before calling super.onCreate().
         super.onCreate(savedInstanceState);
-
+        transportStatus(this);
         if (getResources().getBoolean(R.bool.orientation_portrait_only)) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
@@ -244,9 +249,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                 ContactsManager.getInstance().initializeContactManager(this);
         }
 
-        if (TextUtils.isEmpty(SaveUtils.readUser(this, "account"))) {
-            startActivity(new Intent(this, RigisterAndLoginMainActivity.class));
-        }
+        startRigisterAndLogin();
 
         setContentView(R.layout.main);
         instance = this;
@@ -348,6 +351,12 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         }
         mMissedCount = mHistoryListFragment.getMissedCallLogsAndNotifications();
         refreshBagdeNumber(mMissedCount);
+
+        if(LinphonePreferences.instance().isFirstLaunch()){
+            LinphonePreferences mPrefs = LinphonePreferences.instance();
+            mPrefs.setAutomaticallyAcceptVideoRequests(true);
+            mPrefs.setInitiateVideoCall(true);
+        }
     }
 
     public void refreshBagdeNumber(int count){
@@ -583,7 +592,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     }
 
     public void hideTopBar() {
-        mTopBar.setVisibility(View.GONE);
+    //    mTopBar.setVisibility(View.GONE);
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -718,10 +727,21 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
 //      extras.putString("Photo", photo == null ? null : photo.toString());
 //      changeCurrentFragment(FragmentsAvailable.DIALER, extras);
         android.util.Log.d("zlm","name=="+name+"number=="+number);
-        AddressType address = new AddressText(this, null);
+        final AddressType address = new AddressText(this, null);
         address.setDisplayedName(name);
         address.setText(number);
-        LinphoneManager.getInstance().newOutgoingCall(address);
+        if (!DataService.instance().checkSipRelation(null, number, null, new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                if (DataService.checkResult(msg)) {
+                    LinphoneManager.getInstance().newOutgoingCall(address);
+                } else {
+                    displayCustomToast("fail", Toast.LENGTH_LONG);
+                }
+            }
+        }, 0)) {
+            displayCustomToast("number&id is null", Toast.LENGTH_LONG);
+        }
     }
 
     public void startIncallActivity(Call currentCall) {
@@ -996,6 +1016,9 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     ((SettingsFragment) fragment).startEchoTester();
                 break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                break;
         }
         if (readContactsI >= 0 && grantResults[readContactsI] == PackageManager.PERMISSION_GRANTED) {
             ContactsManager.getInstance().enableContactsAccess();
@@ -1048,6 +1071,17 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             String[] permissions = new String[permissionsList.size()];
             permissions = permissionsList.toArray(permissions);
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_READ_EXTERNAL_STORAGE_DEVICE_RINGTONE);
+        }
+
+        IntentFilter filter = new IntentFilter(DataUtil.BROADCAST_ACCOUNT);
+        filter.addAction(DataUtil.BROADCAST_FRIEND);
+        filter.addAction(DataUtil.BROADCAST_PEOPLE);
+        filter.addAction(DataUtil.BROADCAST_PROPOSER);
+        filter.addAction(DataUtil.BROADCAST_NOTIFICATION);
+        registerReceiver(mBroadcastReceiver, filter);
+
+        if (DataService.isReady()) {
+            DataService.instance().initialise(this);
         }
     }
 
@@ -1134,17 +1168,29 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             }
         }
 
-        if (DataService.isReady()) {
-            DataService.instance().initialise(this);
+        android.util.Log.d("xw", "xiongwei1 onResume");
+        ContactsManager.getInstance().fetchContactsAsync();
+    }
 
-            /* test */
-            DataService.instance().requestFriend("18055835997", "15901801385", "Add test friend", new Handler() {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        android.util.Log.d("xw", "xiongwei1 requestFriend: msg is " + msg);
-                    }
-            }, 0);
+    public static void transportStatus(Activity context){
+        context.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        Window window = context.getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+        );
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        context.getWindow().setStatusBarColor(Color.TRANSPARENT);
+    }
+
+    public static int getStatusBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
         }
+        return result;
     }
 
     @Override
@@ -1674,4 +1720,38 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         mMine = (BadgeRadioButton) findViewById(R.id.tab_main_mine);
 
     }
+
+    public void startRigisterAndLogin() {
+        if (TextUtils.isEmpty(SaveUtils.readUser(this, "account"))) {
+            startActivity(new Intent(this, RigisterAndLoginMainActivity.class));
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        unregisterReceiver(mBroadcastReceiver);
+
+        super.onStop();
+    }
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            android.util.Log.d("xw", "xiongwei1 action="+action);
+            if (DataUtil.BROADCAST_ACCOUNT.equals(action)) {
+                startRigisterAndLogin();
+            } else if (DataUtil.BROADCAST_FRIEND.equals(action)) {
+                ContactsManager.getInstance().fetchContactsAsync();
+            } else if(DataUtil.BROADCAST_PEOPLE.equals(action)) {
+                android.util.Log.d("xw", "xiongwei1 BROADCAST_PEOPLE");
+            } else if(DataUtil.BROADCAST_PROPOSER.equals(action)) {
+                mContactsListFragment.refreshData();
+            } else if(DataUtil.BROADCAST_NOTIFICATION.equals(action)) {
+                android.util.Log.d("xw", "xiongwei1 BROADCAST_NOTIFICATION");
+            } else {
+                android.util.Log.d("BeautyMirrorActivity", "[mBroadcastReceiver]onReceive: action = " + action);
+            }
+        }
+    };
 }

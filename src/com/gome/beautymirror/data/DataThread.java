@@ -66,10 +66,11 @@ public class DataThread extends Thread {
     @Override
     public void run() {
         Log.d(TAG, "run: mUrl is " + mUrl);
+        HttpURLConnection connection = null;
         JSONObject obj = null;
         try {
             URL url = new URL(mUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setReadTimeout(TIMEOUT);
             connection.setConnectTimeout(TIMEOUT);
@@ -155,6 +156,11 @@ public class DataThread extends Thread {
         } catch (Exception e) {
             Log.e(TAG, "run: Exception is ", e);
             obj = setJSONObject(RESULT_ERROR, e.toString());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+                connection = null;
+            }
         }
         sendMsg(obj);
     }

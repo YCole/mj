@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.gome.beautymirror.data.provider.DatabaseUtil;
 import static android.database.Cursor.FIELD_TYPE_STRING;
 
 /**
@@ -34,21 +35,26 @@ public class ContactsUtils {
         if (cursor != null && cursor.getCount() > 0) {
             if (cursor.moveToFirst()) {
                 do {
-                    String phoneNumber = cursor.getString(3);
-                    if (phoneNumber == null || phoneNumber.trim().equals("")) {
+                    String account = cursor.getString(DatabaseUtil.People.COLUMN_ACCOUNT);
+                    if (account == null || account.trim().equals("")) {
                         continue;
                     } else {
                         ContactInfo info = new ContactInfo();
-                        info.setContactId(cursor.getInt(0));
-                        info.setContactName(cursor.getString(2));
-                        info.setPhoneNumber(phoneNumber);
-                        String name = cursor.getString(5);
+                        info.setAccount(account);
+                        info.setContactId(cursor.getInt(DatabaseUtil.People.COLUMN_CONTACT_ID));
+                        info.setContactName(cursor.getString(DatabaseUtil.People.COLUMN_CONTACT_NAME));
+                        info.setPhoneNumber(cursor.getString(DatabaseUtil.People.COLUMN_NUMBER));
+                        String name = cursor.getString(DatabaseUtil.People.COLUMN_NAME);
                         if (name == null || name.trim().equals("")) {
-                            name = phoneNumber;
+                            if(info.getContactName()!=null && !info.getContactName().trim().equals("")){
+                                name = info.getContactName();
+                            }else{
+                                name = account;
+                            }
                         }
                         info.setName(name);
-                        info.setPhoto(cursor.getBlob(6));
-                        info.setAddStatu(cursor.getInt(8) == 1 ? true : false);
+                        info.setPhoto(cursor.getBlob(DatabaseUtil.People.COLUMN_ICON));
+                        info.setAddStatu(cursor.getInt(DatabaseUtil.People.COLUMN_STATUS) == DatabaseUtil.People.STATUS_FRIEND ? true : false);
                         String letter = String.valueOf(Pinyin.toPinyin(name.charAt(0)).toUpperCase().charAt(0));
                         //非字母开头的统一设置成 "#"
                         if (isLetter(letter)) {

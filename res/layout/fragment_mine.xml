@@ -1,37 +1,110 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:imagecontrol="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:visibility="visible"
+    android:background="#FFF5F8FA"
     tools:context="cole.fragments.MineFragment">
 
-    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-160dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/avatar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="188dp"
+            android:background="@drawable/bg_card"
+            android:layout_marginRight="12dp"
+            android:layout_marginLeft="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/myolv_edit_mine"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="92dp"
+                android:gravity="center"
+                android:textColor="#99000000"
+                android:textSize="13sp"/>
+
+            <Button
+                android:id="@+id/BT_edit_mine"
+                android:layout_width="104dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="19dp"
+                android:background="@drawable/bg_open_notification_button"
+                android:textColor="#FFFB5392"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:text="@string/edit_remark_name" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <com.gome.beautymirror.ui.RoundImageView
+        android:id="@+id/iv_mine_fragment_icon"
+        android:src="@drawable/image_head"
+        android:contentDescription="@string/content_description_contact_picture"
+        android:layout_width="131dp"
+        android:layout_height="131dp"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="-238dp"
+        imagecontrol:border_width="2dp"
+        imagecontrol:border_inside_color="@color/white"
+        android:layout_gravity="center" />
+
+
     <cole.view.MyActionBar
         android:id="@+id/actionbar_fragment_mine"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
 
-    <cole.view.MyOneLineView
-        android:id="@+id/myolv_edit_mine"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginBottom="10dp"
-        />
 
-    <cole.view.MyOneLineView
-        android:id="@+id/myolv_devices"
-        android:layout_width="match_parent"
-        android:layout_height="50dp" />
+    <!-- TODO: Update blank fragment layout -->
 
-    <cole.view.MyOneLineView
-        android:id="@+id/myolv_use"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_card"
+        android:layout_marginTop="117dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginLeft="12dp"
+        android:orientation="vertical">
 
-    <cole.view.MyOneLineView
-        android:id="@+id/myolv_about"
-        android:layout_width="match_parent"
-        android:layout_height="50dp" />
+        <cole.view.MyOneLineView
+            android:id="@+id/myolv_devices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <cole.view.MyOneLineView
+            android:id="@+id/myolv_use"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <cole.view.MyOneLineView
+            android:id="@+id/myolv_about"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <cole.view.MyOneLineView
+            android:id="@+id/myolv_logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
 </LinearLayout>

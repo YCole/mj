@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:background="@color/colorF"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFF5F8FA">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,67 +14,72 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
+            <include layout="@layout/common_titlebar"/>
+
             <LinearLayout
-                android:background="@color/colorG"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="120dp"
-                android:paddingBottom="50dp"
-                android:gravity="center"
+                android:layout_marginTop="-116dp"
                 android:orientation="vertical">
 
-                <RelativeLayout
+                <LinearLayout
                     android:id="@+id/avatar_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center">
+                    android:layout_height="242dp"
+                    android:background="@drawable/bg_card"
+                    android:layout_marginRight="12dp"
+                    android:layout_marginLeft="12dp"
+                    android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/contact_picture"
-                        android:src="@drawable/avatar"
-                        android:contentDescription="@string/content_description_contact_picture"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:adjustViewBounds="true"
-                        android:layout_alignParentLeft="true"/>
+                    <TextView
+                        android:id="@+id/account"
+                        android:textSize="20sp"
+                        android:textColor="#99000000"
+                        android:maxLines="1"
+                        android:layout_marginTop="103dp"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"/>
 
-                    <ImageView
-                        android:id="@+id/mask"
+                    <Button
+                        android:id="@+id/add_friend"
+                        android:background="@drawable/bg_button_selected"
+                        android:textColor="#FFFFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="34dp"
+                        android:layout_gravity="bottom"
+                        android:layout_marginBottom="20dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
+                        android:text="添加好友" />
+
+                    <Button
+                        android:id="@+id/wait_friend"
+                        android:background="@drawable/bg_button_unselected"
+                        android:textColor="#CCFFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="34dp"
+                        android:layout_gravity="bottom"
+                        android:layout_marginBottom="20dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
                         android:visibility="gone"
-                        android:src="@drawable/avatar_mask"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:adjustViewBounds="true"
-                        android:layout_alignParentLeft="true"/>
+                        android:text="等待验证" />
 
-                </RelativeLayout>
-
-                <TextView
-                    android:id="@+id/account"
-                    style="@style/font7"
-                    android:maxLines="1"
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <TextView
-                    android:id="@+id/nick_name"
-                    style="@style/font9"
-                    android:maxLines="1"
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                </LinearLayout>
 
             </LinearLayout>
 
-            <Button
-                android:id="@+id/add_friend"
-                android:layout_marginTop="10dp"
-                android:background="@color/colorH"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="添加好友" />
-
+            <ImageView
+                android:id="@+id/contact_picture"
+                android:src="@drawable/image_head"
+                android:contentDescription="@string/content_description_contact_picture"
+                android:layout_width="131dp"
+                android:layout_height="131dp"
+                android:adjustViewBounds="true"
+                android:layout_marginTop="-292dp"
+                android:layout_gravity="center"/>
 
         </LinearLayout>
 

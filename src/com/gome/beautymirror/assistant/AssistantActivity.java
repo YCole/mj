@@ -81,6 +81,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import gome.beautymirror.ui.MyToast;
+
 public class AssistantActivity extends Activity implements OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, AccountCreatorListener {
     private static AssistantActivity instance;
     private ImageView back, cancel;
@@ -145,7 +147,7 @@ public class AssistantActivity extends Activity implements OnClickListener, Acti
                 if (state == ConfiguringState.Successful) {
                     goToBeautyMirrorActivity();
                 } else if (state == ConfiguringState.Failed) {
-                    Toast.makeText(AssistantActivity.instance(), getString(R.string.remote_provisioning_failure), Toast.LENGTH_LONG).show();
+                    MyToast.showToast(AssistantActivity.instance(),getString(R.string.remote_provisioning_failure) , Toast.LENGTH_LONG);
                 }
             }
 

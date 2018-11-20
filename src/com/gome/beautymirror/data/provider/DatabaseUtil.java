@@ -289,9 +289,10 @@ public final class DatabaseUtil {
         public static final String REQUEST = "request";
         public static final String READ = "read";
 
-        public static final int REQUEST_OTHER = 0;
-        public static final int REQUEST_SELF = 1;
-        public static final int REQUEST_DEFAULT = REQUEST_OTHER;
+        public static final int REQUEST_FRIEND = 0;
+        public static final int REQUEST_CONFIRM = 1;
+        public static final int REQUEST_CONFIRMED = 2;
+        public static final int REQUEST_DEFAULT = REQUEST_FRIEND;
 
         public static final int READ_NEW = 0;
         public static final int READ_OLD = 1;

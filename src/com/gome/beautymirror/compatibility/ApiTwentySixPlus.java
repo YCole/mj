@@ -158,7 +158,7 @@ public class ApiTwentySixPlus {
         Notification notif = new Notification.Builder(context, context.getString(R.string.notification_channel_id))
                 .setContentTitle(title)
                 .setContentText(text)
-                .setSmallIcon(R.drawable.call_status_missed)
+                .setSmallIcon(R.drawable.ic_call_miss)
                 .setAutoCancel(true)
                 .setContentIntent(intent)
                 .setDefaults(Notification.DEFAULT_SOUND

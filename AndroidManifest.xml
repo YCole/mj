@@ -66,9 +66,11 @@
         <!--cole add start -->
 
         <activity
+            android:name="cole.activities.CropActivity"
+            android:theme="@style/NoTitle" />
+        <activity
             android:name="cole.activities.RigisterAndLoginMainActivity"
-            android:theme="@style/myAppTheme">
-        </activity>
+            android:theme="@style/myAppTheme"></activity>
 
 
         <activity
@@ -105,7 +107,7 @@
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:theme="@style/myAppTheme"
+            android:theme="@style/myWelcomeAppTheme"
             android:windowSoftInputMode="adjustPan|stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -165,15 +167,15 @@
 
         <activity
             android:name=".activities.ContactDetailsActivity"
-            android:theme="@style/DetailsTheme">
+            android:theme="@style/myAppTheme">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
 
         <activity
             android:name=".activities.RecentCallActivity"
-            android:theme="@style/NoTitle">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -181,7 +183,7 @@
 
         <activity
             android:name=".contacts.ContactListActivity"
-            android:theme="@style/NoTitle">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -189,14 +191,14 @@
 
         <activity
             android:name=".contacts.NewFriendActivity"
-            android:theme="@style/NoTitle">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
             android:name=".contacts.StrangerActivity"
-            android:theme="@style/NoTitle">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -374,6 +376,14 @@
 
         <activity android:name=".activities.BeautyMirrorGenericActivity" />
 
+        <receiver android:name=".data.DataReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".data.DataService"></service>
+
         <receiver android:name=".data.provider.DatabaseUpgradeReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -383,8 +393,6 @@
         <provider
             android:name=".data.provider.DatabaseProvider"
             android:authorities="beautymirror;com.gome.beautymirror"></provider>
-
-        <service android:name=".data.DataService"></service>
 
     </application>
 </manifest>

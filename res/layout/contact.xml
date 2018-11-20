@@ -1,135 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:imagecontrol="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:background="@color/colorF"
-    android:layout_height="match_parent">
+    android:background="#FFF5F8FA"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical" >
+
+        <include layout="@layout/common_titlebar"/>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-116dp"
             android:orientation="vertical">
 
             <LinearLayout
-                android:background="@color/colorG"
+                android:id="@+id/avatar_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="120dp"
-                android:paddingBottom="50dp"
-                android:gravity="center"
+                android:layout_height="188dp"
+                android:background="@drawable/bg_card"
+                android:layout_marginRight="12dp"
+                android:layout_marginLeft="12dp"
                 android:orientation="vertical">
-
-                <RelativeLayout
-                    android:id="@+id/avatar_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center">
-
-                    <ImageView
-                        android:id="@+id/contact_picture"
-                        android:src="@drawable/avatar"
-                        android:contentDescription="@string/content_description_contact_picture"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:adjustViewBounds="true"
-                        android:layout_alignParentLeft="true"/>
-
-                    <ImageView
-                        android:id="@+id/mask"
-                        android:visibility="gone"
-                        android:src="@drawable/avatar_mask"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:adjustViewBounds="true"
-                        android:layout_alignParentLeft="true"/>
-
-                </RelativeLayout>
 
                 <TextView
                     android:id="@+id/contact_name"
-                    style="@style/font7"
+                    android:textSize="20sp"
+                    android:textColor="#99000000"
                     android:maxLines="1"
+                    android:layout_marginTop="92dp"
                     android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"/>
 
                 <TextView
                     android:id="@+id/nick_name"
-                    style="@style/font9"
+                    android:textSize="13sp"
+                    android:textColor="#73000000"
                     android:maxLines="1"
+                    android:layout_marginTop="7dp"
                     android:layout_gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:background="@color/colorG"
-                android:layout_width="match_parent"
-                android:id="@+id/add_remark_cell"
-                android:layout_marginTop="10dp"
-                android:layout_height="50dp"
-                android:orientation="horizontal">
-                <TextView
-                    style="@style/font8"
-                    android:maxLines="1"
-                    android:layout_gravity="left|center_vertical"
-                    android:text="@string/remark_name"
-                    android:layout_marginLeft="10dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <TextView
-                    android:id="@+id/add_remark_name"
-                    style="@style/font9"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="50dp"
-                    android:text="@string/add_remark_name"
-                    android:layout_height="wrap_content"/>
-
-                <ImageView
-                    android:src="@drawable/contact_next_right"
-                    android:layout_gravity="right|center_vertical"
-                    android:layout_marginRight="10dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-
-
-            <LinearLayout
-                android:background="@color/colorG"
-                android:layout_width="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_height="50dp"
-                android:orientation="horizontal">
-
                 <LinearLayout
-                    android:background="@color/colorG"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
 
+                    android:layout_width="match_parent"
+                    android:id="@+id/add_remark_cell"
+                    android:layout_gravity="bottom"
+                    android:layout_marginBottom="13dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
                     <TextView
-                        style="@style/font8"
+                        android:textColor="#E6000000"
+                        android:textSize="15sp"
                         android:maxLines="1"
-                        android:text="账号"
-                        android:layout_marginLeft="10dp"
+                        android:layout_gravity="left|center_vertical"
+                        android:text="@string/remark_name"
+                        android:layout_marginLeft="17dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        style="@style/font9"
+                        android:id="@+id/add_remark_name"
+                        android:textSize="15sp"
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginLeft="16dp"
+                        android:text="@string/add_remark_name"
+                        android:layout_height="wrap_content"/>
+
+                    <ImageView
+                        android:src="@drawable/ic_icon_more"
+                        android:layout_gravity="right|center_vertical"
+                        android:layout_marginRight="17dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.gome.beautymirror.ui.RoundImageView
+            android:id="@+id/contact_picture"
+            android:src="@drawable/image_head"
+            android:contentDescription="@string/content_description_contact_picture"
+            android:layout_width="131dp"
+            android:layout_height="131dp"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="-238dp"
+            imagecontrol:border_width="2dp"
+            imagecontrol:border_inside_color="@color/white"
+            android:layout_gravity="center" />
+
+        <LinearLayout
+            android:layout_marginTop="117dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:layout_marginRight="12dp"
+            android:layout_marginLeft="12dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="17dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/contact_name_font"
+                        android:maxLines="1"
+                        android:text="账号"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        style="@style/contact_account_font"
                         android:id="@+id/tv_account"
                         android:maxLines="1"
                         android:layout_width="wrap_content"
-                        android:layout_marginLeft="10dp"
                         android:text="18756748970"
+                        android:layout_marginBottom="13dp"
                         android:layout_height="wrap_content"/>
 
                 </LinearLayout>
@@ -142,42 +149,43 @@
                     >
                     <ImageView
                         android:id="@+id/vedio_call_account"
-                        android:src="@drawable/camera_default"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                        android:src="@drawable/ic_icon_videocall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:adjustViewBounds="true"
                         android:layout_gravity="center_vertical"
-                        android:layout_marginRight="15dp"
+                        android:layout_marginRight="17dp"
                         />
                 </LinearLayout>
 
             </LinearLayout>
 
             <LinearLayout
-                android:background="@color/colorG"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <LinearLayout
+                    android:layout_marginLeft="17dp"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="vertical">
 
                     <TextView
-                        style="@style/font8"
+                        style="@style/contact_name_font"
                         android:maxLines="1"
                         android:text="设备"
-                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginBottom="2dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        style="@style/font9"
+                        style="@style/contact_account_font"
                         android:id="@+id/tv_device"
                         android:maxLines="1"
                         android:layout_width="wrap_content"
-                        android:layout_marginLeft="10dp"
+                        android:layout_marginBottom="13dp"
                         android:text="Ann的设备"
                         android:layout_height="wrap_content"/>
 
@@ -191,68 +199,72 @@
                     >
                     <ImageView
                         android:id="@+id/vedio_call_device"
-                        android:src="@drawable/camera_default"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:adjustViewBounds="true"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginRight="15dp"
-                        />
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/recent_call"
-                android:background="@color/colorG"
-                android:layout_width="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_height="50dp"
-                android:orientation="horizontal">
-                <TextView
-                    style="@style/font8"
-                    android:layout_gravity="left|center_vertical"
-                    android:text="最近通话"
-                    android:layout_marginLeft="10dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="right"
-                    android:orientation="horizontal"
-                    >
-                    <ImageView
-                        android:src="@drawable/contact_next_right"
+                        android:src="@drawable/ic_icon_videocall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:adjustViewBounds="true"
                         android:layout_gravity="center_vertical"
-                        android:layout_marginRight="10dp"
+                        android:layout_marginRight="17dp"
                         />
                 </LinearLayout>
-            </LinearLayout>
 
-            <LinearLayout
-                android:background="@color/colorG"
-                android:layout_width="match_parent"
-                android:layout_marginTop="10dp"
-                android:layout_height="50dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/deleteContact"
-                    android:text="@string/remove_contact"
-                    style="@style/font8"
-                    android:contentDescription="@string/content_description_delete"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center" />
             </LinearLayout>
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/recent_call"
+            android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_card"
+            android:orientation="horizontal">
+            <TextView
+                style="@style/contact_name_font"
+                android:layout_gravity="left|center_vertical"
+                android:text="通话记录"
+                android:layout_marginLeft="17dp"
+                android:layout_marginBottom="13dp"
+                android:layout_marginTop="13dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="right"
+                android:orientation="horizontal"
+                >
+                <ImageView
+                    android:src="@drawable/ic_icon_more"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginRight="17dp"
+                    />
+            </LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
 
-</RelativeLayout>
+    <Button
+        android:id="@+id/deleteContact"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="42dp"
+        android:background="@drawable/bg_button_delete_contact"
+        android:text="@string/remove_contact"
+        android:textColor="#FFEB4E70"
+        android:textSize="13sp"
+        android:contentDescription="@string/content_description_delete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:gravity="center" />
+        android:layout_marginRight="24dp"
+        android:gravity="center" />
+
+</LinearLayout>

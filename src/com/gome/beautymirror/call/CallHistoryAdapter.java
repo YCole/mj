@@ -26,78 +26,56 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.gome.beautymirror.LinphoneUtils;
 import com.gome.beautymirror.R;
-import com.gome.beautymirror.activities.BeautyMirrorActivity;
-import com.gome.beautymirror.contacts.ContactsManager;
 import com.gome.beautymirror.ui.SelectableAdapter;
 import com.gome.beautymirror.ui.SelectableHelper;
 import com.gome.beautymirror.ui.SlidingButtonView;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.ArrayList;
-
-import android.util.DisplayMetrics;
-import android.view.WindowManager;
-
-import java.util.List;
 import java.util.Map;
-import android.graphics.Typeface;
-import android.widget.Toast;
 
 import com.gome.beautymirror.data.CallLog;
 import com.gome.beautymirror.data.Notification;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
-import com.gome.beautymirror.advertisement.BannerLayout;
-import com.gome.beautymirror.advertisement.PicassoImageLoader;
+import com.gome.beautymirror.ui.RoundImageView;
+
 public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.ViewHolder> implements SlidingButtonView.IonSlidingButtonListener {
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
             View.OnLongClickListener {
-        public TextView contact;
-        public CheckBox select;
+        public TextView mCallName,mNotiticationName;
         public ImageView callDirection;
-        public ImageView contactPicture;
+        public RoundImageView contactPicture;
         public ImageView vedioCall;
-        public LinearLayout CallContact;
-        public TextView callDate;
+        public TextView callDate, notificationData;
         private CallHistoryAdapter.ViewHolder.ClickListener mListener;
-        private SlidingButtonView slidingButtonView;
-        private ViewGroup layout_content;
-        private TextView btn_Delete;
-        private TextView count,content;
-        private RelativeLayout historyClickLayout;
+        private TextView content,mNotificationTitle;
+        private LinearLayout mLlCallLog,mLlNotification,historyClickLayout;
 
         public ViewHolder(View view, CallHistoryAdapter.ViewHolder.ClickListener listener) {
             super(view);
-            slidingButtonView = (SlidingButtonView) view;
-            layout_content = (ViewGroup) itemView.findViewById(R.id.layout_content);
-            btn_Delete = (TextView) itemView.findViewById(R.id.history_delete);
-            contact = view.findViewById(R.id.sip_uri);
-            select = view.findViewById(R.id.delete);
+            mCallName = view.findViewById(R.id.call_name);
+            mNotiticationName = view.findViewById(R.id.notification_name);
             callDirection = view.findViewById(R.id.icon);
             contactPicture = view.findViewById(R.id.contact_picture);
             callDate = view.findViewById(R.id.call_date);
-            count = view.findViewById(R.id.count);
+            notificationData = view.findViewById(R.id.notification_date);
             content = view.findViewById(R.id.content);
+            mNotificationTitle = view.findViewById(R.id.notification_title);
             vedioCall = view.findViewById(R.id.vedio_call);
             historyClickLayout = view.findViewById(R.id.history_click);
+            mLlCallLog = view.findViewById(R.id.ll_call_log);
+            mLlNotification = view.findViewById(R.id.ll_notification);
             mListener = listener;
-            layout_content.setOnClickListener(this);
             vedioCall.setOnClickListener(this);
             historyClickLayout.setOnClickListener(this);
             view.setOnLongClickListener(this);
-            btn_Delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onDeleteBtnClick(getAdapterPosition());
-                }
-            });
+
         }
 
         @Override
@@ -150,67 +128,57 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.history_cell_item, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.history_cell, parent, false);
         return new ViewHolder(v, clickListener);
 
     }
 
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder,  int position) {
-        holder.slidingButtonView.setSlidingButtonListener(this);
         Map.Entry element = (Map.Entry) mList_key.get(position);
         if(element.getKey() instanceof CallLog){
+            holder.mLlNotification.setVisibility(View.GONE);
             final CallLog log = (CallLog)element.getKey();
             if(log.mStatus == DatabaseUtil.Calllog.STATUS_MISSED){
-                holder.callDirection.setImageResource(R.drawable.call_status_missed);
+                holder.callDirection.setImageResource(R.drawable.bg_ciricle_call_miss);
                 holder.content.setText(mContext.getString(R.string.missed_calls_notif_title));
             }else if(log.mStatus == DatabaseUtil.Calllog.STATUS_INCOMING){
-                holder.callDirection.setImageResource(R.drawable.call_status_incoming);
+                holder.callDirection.setImageResource(R.drawable.bg_ciricle_call_in);
                 holder.content.setText(mContext.getString(R.string.incoming_calls_notif_title));
             }else if(log.mStatus == DatabaseUtil.Calllog.STATUS_OUTGOING){
-                holder.callDirection.setImageResource(R.drawable.call_status_outgoing);
+                holder.callDirection.setImageResource(R.drawable.bg_ciricle_call_out);
                 holder.content.setText(mContext.getString(R.string.outgoing_calls_notif_title));
             }
-            holder.contactPicture.setImageBitmap(ContactsManager.getInstance().getDefaultAvatarBitmap());
-            holder.callDate.setText(updateRelativeTime(log));
+            if(log.mIcon != null){
+                holder.contactPicture.setImageBitmap(log.mIcon);
+            }
+            holder.callDate.setText(updateRelativeTime(log.mTime));
             int strValue = (int)element.getValue();
-            holder.count.setText("("+strValue+")");
-            if(log.mComment!=null){
-                holder.contact.setText(log.mComment);
-            }else{
-                holder.contact.setText(log.mAccount);
+
+            if(log.mComment!=null && !log.mComment.equals("")){
+                holder.mCallName.setText(log.mComment);
+            }else if(log.mName != null && !log.mName.equals("")){
+                holder.mCallName.setText(log.mName);
+            }else if(log.mAccount != null && !log.mAccount.equals("")){
+                holder.mCallName.setText(log.mAccount);
+            }
+            if(strValue > 1){
+                holder.mCallName.setText(holder.mCallName.getText()+"（ "+strValue+" ）");
             }
 
-        }else if(element.getKey() instanceof Notification){//mList_key.get(position)
+        }else if(element.getKey() instanceof Notification){
+            holder.mLlCallLog.setVisibility(View.GONE);
             final Notification mNotification = (Notification)element.getKey();
-            holder.callDirection.setVisibility(View.GONE);
-            holder.contact.setText(mNotification.mName+mContext.getString(R.string.nofiticafion_title));
-            holder.contact.setTextSize(14);
-            holder.contact.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
-            holder.content.setText(mContext.getString(R.string.nofiticafion_message));
+            if(mNotification.mIcon != null){
+                holder.contactPicture.setImageBitmap(mNotification.mIcon);
+            }
+            holder.mNotiticationName.setText(mNotification.mName+"hghghhgh");
+            holder.mNotificationTitle.setText(mContext.getString(R.string.nofiticafion_title));
+            holder.notificationData.setText(updateRelativeTime(mNotification.mTime));
         }
 
-        holder.contact.setSelected(true); // For automated horizontal scrolling of long texts
-        Calendar logTime = Calendar.getInstance();
-        holder.select.setVisibility(isEditionEnabled() ? View.VISIBLE : View.GONE);
-        holder.select.setChecked(isSelected(position));
+        holder.mCallName.setSelected(true); // For automated horizontal scrolling of long texts
 
-//        LinphoneContact c = ContactsManager.getInstance().findContactFromAddress(address);
-//        if (c != null) {
-//            LinphoneUtils.setThumbnailPictureFromUri(BeautyMirrorActivity.instance(), holder.contactPicture, c.getThumbnailUri());
-//        } else {
-//            holder.contactPicture.setImageBitmap(ContactsManager.getInstance().getDefaultAvatarBitmap());
-//        }
-
-        holder.layout_content.getLayoutParams().width =getScreenWidth(mContext) ;//+ viewHolder.rl_left.getLayoutParams().width;
-
-        if (allOpen) {
-            holder.slidingButtonView.openMenu();
-            holder.slidingButtonView.setCanTouch(false);
-        } else {
-            holder.slidingButtonView.closeMenu();
-            holder.slidingButtonView.setCanTouch(true);
-        }
     }
 
     @Override
@@ -252,9 +220,9 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
         return isSameDay(cal, yesterday);
     }
 
-    private String updateRelativeTime(CallLog log) {
+    private String updateRelativeTime(Long time) {
         Long now = System.currentTimeMillis()/1000;
-        Long duration = Math.abs(now - log.mTime);
+        Long duration = Math.abs(now - time);
         int count;
         String result;
         if (duration < 60) {
@@ -264,7 +232,7 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
             result = String.format(mContext.getResources().getString(R.string.duration_minutes_shortest),count);
 
         } else{
-            Long longDate = Long.parseLong(String.valueOf(log.mTime));
+            Long longDate = Long.parseLong(String.valueOf(time));
             result = LinphoneUtils.timestampToHumanDate(mContext, longDate, mContext.getString(R.string.history_detail_date_format));
         }
         return result;
@@ -297,11 +265,4 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
         mMenu = (SlidingButtonView) view;
     }
 
-    public static int getScreenWidth(Context context) {
-        WindowManager wm = (WindowManager) context
-                .getSystemService(Context.WINDOW_SERVICE);
-        DisplayMetrics outMetrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getMetrics(outMetrics);
-        return outMetrics.widthPixels;
-    }
 }

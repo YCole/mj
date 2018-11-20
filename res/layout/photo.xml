@@ -5,46 +5,52 @@
     android:orientation="vertical"
     android:layout_height="match_parent">
 
-
     <LinearLayout
-        android:id="@+id/top_bar"
+        android:orientation="vertical"
+        android:background="@drawable/bg"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="@color/colorC"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
-        <!--<View-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_weight="0.4"/>-->
+        <LinearLayout
+            android:id="@+id/action_bar"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0.2"
-            android:gravity="center"
-            android:text="@string/beauty_mirror"
-            android:textColor="#fff"
-            android:textSize="25dp" />
+            <TextView
+                android:text="@string/beauty_mirror"
+                android:textColor="#FFFFFFFF"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22dp"
+                android:layout_marginTop="16dp"
+                android:fontFamily="FZLTHK--GBK1-0"
+                android:layout_marginLeft="23dp"/>
 
+        </LinearLayout>
 
     </LinearLayout>
 
     <com.gome.beautymirror.advertisement.BannerLayout
         android:id="@+id/banner2"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_width="338dp"
+        android:layout_height="334dp"
+        android:layout_marginTop="-160dp"
+        android:layout_marginLeft="11dp"
+        android:layout_marginBottom="11dp"
         app:autoPlayDuration="3000"
         app:indicatorMargin="10dp"
-        app:indicatorPosition="centerBottom"
+        app:indicatorMarginRight="20dp"
+        app:indicatorMarginBottom="20dp"
+        app:indicatorPosition="rightBottom"
         app:indicatorShape="oval"
         app:indicatorSpace="3dp"
-        app:scrollDuration="900"
+        app:scrollDuration="1000"
         app:selectedIndicatorColor="#ffffff"
-        app:selectedIndicatorHeight="6dp"
-        app:selectedIndicatorWidth="6dp"
-        app:unSelectedIndicatorColor="#66ffffff"
-        app:unSelectedIndicatorHeight="6dp"
-        app:unSelectedIndicatorWidth="6dp" />
+        app:selectedIndicatorHeight="5dp"
+        app:selectedIndicatorWidth="5dp"
+        app:unSelectedIndicatorColor="#5EF4F4F4"
+        app:unSelectedIndicatorHeight="5dp"
+        app:unSelectedIndicatorWidth="5dp" />
 
 </LinearLayout>

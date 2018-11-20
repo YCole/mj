@@ -6,27 +6,48 @@
     android:background="@color/colorC">
 
         <include
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:background="@color/colorC"
             layout="@layout/common_titlebar" />
 
-        <TextView
-            android:id="@+id/no_call_recent"
-            style="@style/font2"
+        <LinearLayout
+            android:orientation="vertical"
+            android:background="@drawable/bg_contact"
+            android:layout_marginTop="-160dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="200dp"
-            android:gravity="center"
-            android:text="@string/no_call_history" />
+            android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recent_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:cacheColorHint="@color/transparent"
-            android:divider="@color/colorE"
-            android:dividerHeight="1dp" />
+                <LinearLayout
+                    android:id="@+id/no_call_recent"
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                        <ImageView
+                            android:layout_width="132dp"
+                            android:layout_height="132dp"
+                            android:layout_marginLeft="114dp"
+                            android:layout_marginRight="114dp"
+                            android:layout_marginTop="85dp"
+                            android:src="@drawable/empty_noncall" />
+
+                        <TextView
+                            android:text="没有最近通话"
+                            style="@style/empty_font"
+                            android:layout_marginTop="5dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:layout_centerVertical="true"/>
+                </LinearLayout>
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recent_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:cacheColorHint="@color/transparent"
+                    android:dividerHeight="1dp" />
+
+        </LinearLayout>
+
 
 </LinearLayout>

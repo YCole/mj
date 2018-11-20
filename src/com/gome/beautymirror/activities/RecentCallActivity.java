@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.ImageButton;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,14 +32,24 @@ public class RecentCallActivity  extends Activity implements View.OnClickListene
     private String account;
     private RecentCallAdapter mRecentCallAdapter;
     private RecyclerView recentList;
-    private TextView noCallRecent;
+    private LinearLayout noCallRecent;
     private LinearLayoutManager mLayoutManager;
-    private ImageButton mBtBack;
+    private ImageView mBtBack;
     private TextView mTvTitleName;
+    LinearLayout mSearchRoot, mActionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        Window window =getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+        );
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.recent_call);
         account = getIntent().getExtras().getString("Account");
         recentList = findViewById(R.id.recent_list);
@@ -46,6 +60,13 @@ public class RecentCallActivity  extends Activity implements View.OnClickListene
         mTvTitleName=findViewById(R.id.tv_title_name);
         mTvTitleName.setText(getResources().getString(R.string.recent_call));
         mBtBack.setOnClickListener(this);
+
+        mSearchRoot = findViewById(R.id.search_root);
+        mSearchRoot.setVisibility(View.GONE);
+
+        mActionBar = findViewById(R.id.action_bar);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
 
     }
 

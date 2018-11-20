@@ -6,6 +6,7 @@ import android.app.Service;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -20,6 +21,7 @@ import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -50,7 +52,7 @@ import cole.utils.SaveUtils;
 import org.linphone.core.TransportType;
 import org.linphone.core.CoreException;
 
-public class DataService extends Service implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class DataService extends Service {
 
     private static final String TAG = "DataService";
 
@@ -69,6 +71,11 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     private static final int MESSAGE_SYNC = 1;
     private static final int LOOP_SIP_TIME = 10 * 1000;
     private static final int MESSAGE_SIP = 2;
+    private static final int MESSAGE_BROADCAST_ACCOUNT = 3;
+    private static final int MESSAGE_BROADCAST_FRIEND = 4;
+    private static final int MESSAGE_BROADCAST_PEOPLE = 5;
+    private static final int MESSAGE_BROADCAST_PROPOSER = 6;
+    private static final int MESSAGE_BROADCAST_NOTIFICATION = 7;
 
     private static DataService instance;
 
@@ -100,6 +107,35 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
             switch (msg.what) {
                 case MESSAGE_SYNC:
                     result = sync();
+                    break;
+
+                case MESSAGE_SIP:
+                    result = loginSip(null);
+                    break;
+
+                case MESSAGE_BROADCAST_ACCOUNT:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_ACCOUNT));
+                    result = true;
+                    break;
+
+                case MESSAGE_BROADCAST_FRIEND:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_FRIEND));
+                    result = true;
+                    break;
+
+                case MESSAGE_BROADCAST_PEOPLE:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_PEOPLE));
+                    result = true;
+                    break;
+
+                case MESSAGE_BROADCAST_PROPOSER:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_PROPOSER));
+                    result = true;
+                    break;
+
+                case MESSAGE_BROADCAST_NOTIFICATION:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_NOTIFICATION));
+                    result = true;
                     break;
 
                 default:
@@ -146,16 +182,21 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         super.onDestroy();
     }
 
+    private boolean sendBroadcast(int msg) {
+        Log.d(TAG, "sendBroadcast: start");
+        mHandler.removeMessages(msg);
+        return mHandler.sendEmptyMessage(msg);
+    }
+
     public boolean initialise(Activity activity) {
         boolean result = false;
         Log.d(TAG, "initialise: start");
 
-        syncContacts(activity);
+        result = syncContacts(activity);
 
         result = loginSip(null);
 
-        mHandler.removeMessages(MESSAGE_SYNC);
-        result = mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_SYNC), 0);
+        result = sync();
 
         return result;
     }
@@ -164,10 +205,10 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         boolean result = false;
         Log.d(TAG, "sync: start");
         checkAccount();
-        checkFriend();
         checkPeople(null, null);
-        if (!mHandler.hasMessages(MESSAGE_SYNC)) {
-            result = mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_SYNC), LOOP_SYNC_TIME);
+        if (!TextUtils.isEmpty(matchAccount(null))) {
+            mHandler.removeMessages(MESSAGE_SYNC);
+            result = mHandler.sendEmptyMessageDelayed(MESSAGE_SYNC, LOOP_SYNC_TIME);
         }
         return result;
     }
@@ -204,8 +245,13 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 handler == null ? null : handler.obtainMessage(what)).start();
     }
 
-    public void loginAccount(final String account, final String password, String id, final Handler handler, final int what) {
-        final String info = DataUtil.getDevice(this);
+    public boolean loginAccount(Activity activity, final String account, final String password, String id, final Handler handler, final int what) {
+        if (checkAndRequestPermission(activity, Manifest.permission.READ_PHONE_STATE, PERMISSIONS_REQUEST_READ_PHONE_STATE)) {
+           return false;
+        }
+
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        final String info = DataUtil.getMD5(telephonyManager.getDeviceId());
         Handler h = new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
@@ -218,6 +264,8 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                             } else {
                                 SaveUtils.writeUser(DataService.this, "account", account);
                             }
+                            boolean result = loginSip(null);
+                            result = sync();
                         } else {
                             Log.d(TAG, "loginAccount: obj is " + obj);
                         }
@@ -240,6 +288,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         }
         new DataThread(DataUtil.ACCOUNT_URL + "loginMagic", params,
                 h.obtainMessage(0)).start();
+        return true;
     }
 
     private Uri saveAccount(String account, String password, String name, Bitmap icon, String sip, Long time, String info, String id) {
@@ -249,7 +298,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         values.put(DatabaseUtil.Account.PASSWORD, password);
         values.put(DatabaseUtil.Account.NAME, name);
         values.put(DatabaseUtil.Account.ICON, DataUtil.getImage(icon));
-        values.put(DatabaseUtil.Account.SIP, "sip:" + sip);
+        values.put(DatabaseUtil.Account.SIP, sip);
         values.put(DatabaseUtil.Account.TIME, time);
         values.put(DatabaseUtil.Account.INFO, info);
         values.put(DatabaseUtil.Account.ID, id);
@@ -297,11 +346,15 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                             }
                             Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
                             if (!info.equals(obj.getString("loginInfo"))) {
-                                sendBroadcast(new Intent(DataUtil.BROADCAST_INFO));
+                                Toast.makeText(DataService.this, "Account is abnormal.", Toast.LENGTH_LONG).show();
+                                int count = logoutAccount(account);
+                                if (count > 0) sendBroadcast(MESSAGE_BROADCAST_ACCOUNT);
                             } else if (date.getTime() != time) {
                                 syncAccount(account);
+                                checkFriend();
                             } else {
                                 Log.d(TAG, "checkAccount: not changed");
+                                checkFriend();
                             }
                         } else {
                             Log.d(TAG, "checkAccount: obj is " + obj);
@@ -350,9 +403,10 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     }
 
     @SuppressLint("SimpleDateFormat")
-    public void updateAccount(final String account, final String name, final Bitmap icon, final Handler handler, final int what) {
-        Cursor cursor = getAccounts(null, null, null, null);
+    public void updateAccount(String account, final String name, final Bitmap icon, final Handler handler, final int what) {
+        Cursor cursor = getAccounts(null, TextUtils.isEmpty(account) ? null : DatabaseUtil.Account.ACCOUNT + " = " + account, null, null);
         if (cursor != null && cursor.moveToFirst()) {
+            final String a = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
             Handler h = new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
@@ -360,7 +414,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                         try {
                             if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
                                 Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
-                                int count = updateAccount(account, name, icon, date.getTime());
+                                int count = updateAccount(a, name, icon, date.getTime());
                             } else {
                                 Log.d(TAG, "updateAccount: obj is " + obj);
                             }
@@ -377,10 +431,10 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                     }
             };
             final Map<String, String> params = new HashMap<String, String>();
-            params.put("number", account);
+            params.put("number", a);
             params.put("name", name);
             params.put("password", cursor.getString(DatabaseUtil.Account.COLUMN_PASSWORD));
-            new DataThread(DataUtil.ACCOUNT_URL + "updateAccount", params, account, icon,
+            new DataThread(DataUtil.ACCOUNT_URL + "updateAccount", params, a, icon,
                     h.obtainMessage(0)).start();
         } else {
             Log.d(TAG, "updateAccount: account is null");
@@ -413,11 +467,30 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     }
 
     public int logoutAccount(String account) {
-        SaveUtils.writeUser(this, "account", "");
-        return mContentResolver.delete(Uri.withAppendedPath(DatabaseProvider.ACCOUNT_URI, account), null, null);
+        account = matchAccount(account);
+        if (!TextUtils.isEmpty(account)) {
+            logoutSip();
+            SaveUtils.writeUser(this, "account", "");
+            int count = mContentResolver.delete(Uri.withAppendedPath(DatabaseProvider.ACCOUNT_URI, account), null, null);
+            if (count > 0) {
+                deleteDevices(null, null);
+                deleteFriends(null, null);
+                deleteFriendDevices(null, null);
+                deletePeoples(null, null);
+                deleteProposers(null, null);
+                deleteCalllogs(null, null);
+                deleteNotifications(null, null);
+                deleteFiles(null, null);
+            }
+            return count;
+        } else {
+            Log.d(TAG, "logoutAccount: account is null");
+            return 0;
+        }
     }
 
     public void requestReset(String account, Handler handler, int what) {
+        account = matchAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
         params.put("smsType", "2");
@@ -426,6 +499,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     }
 
     public void resetAccount(String account, String code, String password, Handler handler, int what) {
+        account = matchAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
         params.put("smsType", "2");
@@ -436,6 +510,8 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     }
 
     public void deleteAccount(String account, Handler handler, int what) {
+        account = matchAccount(account);
+        int count = logoutAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
         new DataThread(DataUtil.ACCOUNT_URL + "delAccount", params,
@@ -489,7 +565,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         values.put(DatabaseUtil.Device.TYPE, DatabaseUtil.Device.TYPE_MIRROR);
         values.put(DatabaseUtil.Device.PERMISSION, DatabaseUtil.Device.PERMISSION_PUBLIC);
         values.put(DatabaseUtil.Device.DEVICE_NAME, name);
-        values.put(DatabaseUtil.Device.DEVICE_SIP, "sip:" + sip);
+        values.put(DatabaseUtil.Device.DEVICE_SIP, sip);
         values.put(DatabaseUtil.Device.DEVICE_TIME, 0L);
         return mContentResolver.insert(DatabaseProvider.DEVICES_URI, values);
     }
@@ -643,12 +719,16 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         if (cursor != null) cursor.close();
     }
 
-    private Cursor getDevice(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    private Cursor getDevices(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         return mContentResolver.query(DatabaseProvider.DEVICES_URI, projection, selection, selectionArgs, sortOrder);
     }
 
+    private int deleteDevices(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.DEVICES_URI, selection, selectionArgs);
+    }
+
     private int deleteDevice(String id) {
-        return mContentResolver.delete(DatabaseProvider.DEVICES_URI, DatabaseUtil.Device.ID + " = ?", new String[]{id});
+        return deleteDevices(DatabaseUtil.Device.ID + " = ?", new String[]{id});
     }
 
     public Cursor getAccountsAndDevices(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
@@ -658,7 +738,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     public Cursor getAccountForSip(String sip) {
         return getAccountsAndDevices(null,
                 DatabaseUtil.Account.SIP + " = ? or " + DatabaseUtil.Account.DEVICE_SIP + " = ?",
-                new String[]{"sip:" + sip, "sip:" + sip},
+                new String[]{sip, sip},
                 null);
     }
     /* } */
@@ -731,6 +811,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                                             syncProposer(account, time);
                                         }
                                         if (cursor != null) cursor.close();
+                                        sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                                     } else {
                                         String id = data.optString("deviceNo");
                                         if (friends.size() > 0 && friends.get(account) != null) {
@@ -743,7 +824,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                                             } else {
                                                 if (!TextUtils.isEmpty(id)) {
                                                     int count = updateFriendAndDevice(account, null);
-                                                    count = deleteFriendDevices(friend.getId());
+                                                    count = deleteFriendDevice(friend.getId());
                                                 }
                                             }
                                             if (time != friend.getTime()) {
@@ -769,14 +850,25 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                                                         null,
                                                         data.getString("accountSip"));
                                             }
-                                            updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
-                                            logNotification(account, null, DatabaseUtil.Notification.REQUEST_OTHER);
+                                            int count = updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
+                                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
+                                            count = updatePeople(account, DatabaseUtil.People.STATUS_FRIEND);
+                                            count = updateNotification(account, DatabaseUtil.Notification.REQUEST_CONFIRMED);
+                                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
                                             syncFriend(account);
                                         }
+                                        sendBroadcast(MESSAGE_BROADCAST_FRIEND);
                                     }
                                 }
                                 for (String account : friends.keySet()) {
                                     int count = deleteFriend(account);
+                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
+                                    count = updatePeople(account, DatabaseUtil.People.STATUS_UNKNOW);
+                                    count = deleteProposer(account);
+                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
+                                    count = deleteCalllog(account);
+                                    count = deleteNotification(account);
+                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
                                 }
                             } else {
                                 Log.d(TAG, "checkFriend: obj is " + obj);
@@ -806,7 +898,14 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                         if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                             String name = obj.optString("name");
                             Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
-                            int count = updateFriend(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, DataUtil.getImage(obj.optString("icon")), date.getTime());
+                            int count = updateFriend(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
+                            count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
+                            count = updatePeople(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
                         } else {
                             Log.d(TAG, "syncFriend: obj is " + obj);
                         }
@@ -831,7 +930,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         values.put(DatabaseUtil.Friend.TIME, time);
         values.put(DatabaseUtil.Friend.ID, id);
         values.put(DatabaseUtil.Friend.COMMENT, comment);
-        values.put(DatabaseUtil.Friend.SIP, "sip:" + sip);
+        values.put(DatabaseUtil.Friend.SIP, sip);
         return mContentResolver.insert(DatabaseProvider.FRIENDS_URI, values);
     }
 
@@ -868,9 +967,13 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                     try {
                         if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                             int count = deleteFriend(friendAccount);
-                            count = deleteProposers(friendAccount);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
+                            count = updatePeople(friendAccount, DatabaseUtil.People.STATUS_UNKNOW);
+                            count = deleteProposer(friendAccount);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                             count = deleteCalllog(friendAccount);
                             count = deleteNotification(friendAccount);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
                         } else {
                             Log.d(TAG, "deleteFriend: obj is " + obj);
                         }
@@ -891,8 +994,12 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 h.obtainMessage(0)).start();
     }
 
+    private int deleteFriends(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.FRIENDS_URI, selection, selectionArgs);
+    }
+
     private int deleteFriend(String account) {
-        return mContentResolver.delete(DatabaseProvider.FRIENDS_URI, DatabaseUtil.Friend.ACCOUNT + " = ?", new String[]{account});
+        return deleteFriends(DatabaseUtil.Friend.ACCOUNT + " = ?", new String[]{account});
     }
 
     private Uri saveFriendDevice(String id, String name, String sip) {
@@ -900,7 +1007,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         values.put(DatabaseUtil.FriendDevice.ID, id);
         values.put(DatabaseUtil.FriendDevice.TYPE, DatabaseUtil.Device.TYPE_MIRROR);
         values.put(DatabaseUtil.FriendDevice.DEVICE_NAME, name);
-        values.put(DatabaseUtil.FriendDevice.DEVICE_SIP, "sip:" + sip);
+        values.put(DatabaseUtil.FriendDevice.DEVICE_SIP, sip);
         values.put(DatabaseUtil.FriendDevice.DEVICE_TIME, 0L);
         return mContentResolver.insert(DatabaseProvider.FRIENDDEVICES_URI, values);
     }
@@ -909,8 +1016,12 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         return mContentResolver.query(DatabaseProvider.FRIENDDEVICES_URI, projection, selection, selectionArgs, sortOrder);
     }
 
-    private int deleteFriendDevices(String id) {
-        return mContentResolver.delete(DatabaseProvider.FRIENDDEVICES_URI, DatabaseUtil.FriendDevice.ID + " = ?", new String[]{id});
+    private int deleteFriendDevices(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.FRIENDDEVICES_URI, selection, selectionArgs);
+    }
+
+    private int deleteFriendDevice(String id) {
+        return deleteFriendDevices(DatabaseUtil.FriendDevice.ID + " = ?", new String[]{id});
     }
 
     public Cursor getFriendsAndDevices(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
@@ -920,16 +1031,47 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     public Cursor getFriendForSip(String sip) {
         return getFriendsAndDevices(null,
                 DatabaseUtil.Friend.SIP + " = ? or " + DatabaseUtil.Friend.DEVICE_SIP + " = ?",
-                new String[]{"sip:" + sip, "sip:" + sip},
+                new String[]{sip, sip},
                 null);
     }
     /* } */
 
-    public void queryPeople(String number, Handler handler, int what) {
+    public void queryPeople(String number, final Handler handler, final int what) {
+        Handler h = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    try {
+                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            String name = obj.getString("contact_name");
+                            int count = updatePeople(obj.getString("contact_account"),
+                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                            count = updateFriend(obj.getString("contact_account"),
+                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
+                            count = updateProposer(obj.getString("contact_account"),
+                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
+                        } else {
+                            Log.d(TAG, "queryPeople: obj is " + obj);
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "queryPeople: JSONException is ", e);
+                    }
+                    if (handler != null) {
+                        handler.obtainMessage(what, obj).sendToTarget();
+                    } else {
+                        Log.d(TAG, "queryPeople: handler is null");
+                    }
+                }
+        };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("contactNumber", number);
         new DataThread(DataUtil.FRIEND_URL + "findFriendAccount", params,
-                handler == null ? null : handler.obtainMessage(what)).start();
+                h.obtainMessage(0)).start();
     }
 
     private void checkPeople(Cursor cursor, String exception) {
@@ -947,6 +1089,18 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         }
     }
 
+    private int matchFriend(String account) {
+        int status = DatabaseUtil.People.STATUS_DEFAULT;
+        Cursor cursor = getFriends(null, DatabaseUtil.Friend.ACCOUNT + " = " + account, null, null);
+        if (cursor != null && cursor.getCount() > 0) {
+            status = DatabaseUtil.People.STATUS_FRIEND;
+        } else {
+            status = DatabaseUtil.People.STATUS_UNKNOW;
+        }
+        if (cursor != null) cursor.close();
+        return status;
+    }
+
     private void syncPeople(final Cursor cursor, final String exception) {
         final int contactId = cursor.getInt(DatabaseUtil.People.COLUMN_CONTACT_ID);
         String number = cursor.getString(DatabaseUtil.People.COLUMN_NUMBER);
@@ -954,18 +1108,22 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
             String[] numberArray = number.split(",");
             number = numberArray[0];
         }
-        if (!TextUtils.isEmpty(number) && !number.equals(exception)) {
+        if (!TextUtils.isEmpty(number) && !number.equals(exception)
+                && cursor.getInt(DatabaseUtil.People.COLUMN_STATUS) != DatabaseUtil.People.STATUS_FRIEND) {
             Handler h = new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
                         try {
                             JSONObject obj = (JSONObject) msg.obj;
-                            Log.d(TAG, "xiongwei1 syncPeople: obj is " + obj);
                             if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                                 String name = obj.getString("contact_name");
                                 int count = updatePeople(contactId, obj.getString("contact_account"),
                                         (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
                                         DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                                count = updateProposer(obj.getString("contact_account"),
+                                        (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                        DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                                if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                             } else if ("111".equals(obj.getString(DataThread.RESULT_CODE))) {
                                 int count = updatePeople(contactId, null, null, null, 0L);
                             } else {
@@ -990,39 +1148,40 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
     }
 
     private int updatePeople(int id, String account, String name, Bitmap icon, Long time) {
-        int status = DatabaseUtil.People.STATUS_DEFAULT;
-        Cursor cursor = getFriends(null, DatabaseUtil.Friend.ACCOUNT + " = " + account, null, null);
-        if (cursor != null && cursor.getCount() > 0) {
-            status = DatabaseUtil.People.STATUS_FRIEND;
-        } else {
-            status = DatabaseUtil.People.STATUS_UNKNOW;
-        }
-        if (cursor != null) cursor.close();
-
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.People.ACCOUNT, account);
         values.put(DatabaseUtil.People.NAME, name);
         values.put(DatabaseUtil.People.ICON, DataUtil.getImage(icon));
         values.put(DatabaseUtil.People.TIME, time);
-        values.put(DatabaseUtil.People.STATUS, status);
+        values.put(DatabaseUtil.People.STATUS, matchFriend(account));
         return mContentResolver.update(DatabaseProvider.PEOPLES_URI, values, DatabaseUtil.People.CONTACT_ID + " = " + id, null);
+    }
+
+    private int updatePeople(String account, String name, Bitmap icon, Long time) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.People.NAME, name);
+        values.put(DatabaseUtil.People.ICON, DataUtil.getImage(icon));
+        values.put(DatabaseUtil.People.TIME, time);
+        return mContentResolver.update(DatabaseProvider.PEOPLES_URI, values, DatabaseUtil.People.ACCOUNT + " = " + account, null);
+    }
+
+    private int updatePeople(String account, int status) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.People.STATUS, status);
+        return mContentResolver.update(DatabaseProvider.PEOPLES_URI, values, DatabaseUtil.People.ACCOUNT + " = " + account, null);
     }
 
     public Cursor getPeoples(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         return mContentResolver.query(DatabaseProvider.PEOPLES_URI, projection, selection, selectionArgs, sortOrder);
     }
 
-    public void syncContacts(Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            if(activity == null) {
-                Log.d(TAG, "syncContacts: activity is null.");
-            } else {
-                ActivityCompat.requestPermissions(activity,
-                        new String[]{Manifest.permission.WRITE_CONTACTS},
-                        PERMISSIONS_REQUEST_WRITE_CONTACTS);
-            }
-            return;
+    private int deletePeoples(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.PEOPLES_URI, selection, selectionArgs);
+    }
+
+    public boolean syncContacts(Activity activity) {
+        if (checkAndRequestPermission(activity, Manifest.permission.READ_CONTACTS , PERMISSIONS_REQUEST_READ_CONTACTS)) {
+            return false;
         }
 
         Cursor cursorContatcs = mContentResolver.query(ContactsContract.RawContacts.CONTENT_URI,
@@ -1035,7 +1194,6 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 new String[] { DatabaseUtil.People.CONTACT_ID,
                         DatabaseUtil.People.VERSION},
                 null, null, DatabaseUtil.People.CONTACT_ID + " asc");
-
         if (cursorContatcs == null || !cursorContatcs.moveToFirst()) {
             if (cursorPeoples != null && cursorPeoples.moveToFirst()) {
                 mContentResolver.delete(DatabaseProvider.PEOPLES_URI, null, null);
@@ -1108,14 +1266,14 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 }
             }
         }
-
         if (cursorContatcs != null) cursorContatcs.close();
         if (cursorPeoples != null) cursorPeoples.close();
+
+        return false;
     }
 
     private String getContactNumbers(Long id) {
         StringBuilder sb = new StringBuilder();
-
         Cursor cursor = mContentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 new String[] { ContactsContract.CommonDataKinds.Phone.NUMBER},
                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id, null, null);
@@ -1137,18 +1295,24 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         } else {
             Log.d(TAG, "getContactNumbers: number is null.");
         }
-
         return sb.toString();
     }
 
-    public void requestFriend(String account, String number, String message, final Handler handler, final int what) {
+    public void requestFriend(String account, final String number, String message, final Handler handler, final int what) {
         account = matchAccount(account);
+        if (TextUtils.isEmpty(account) || TextUtils.isEmpty(number) || account.equals(number)) {
+            Log.d(TAG, "requestFriend: return");
+            return;
+        }
         Handler h = new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
                     JSONObject obj = (JSONObject) msg.obj;
                     try {
-                        if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
+						if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            Uri uri = logNotification(number, DatabaseUtil.Notification.REQUEST_FRIEND);
+                            if (uri != null) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                        } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
                             checkFriend();
                         } else {
                             Log.d(TAG, "requestFriend: obj is " + obj);
@@ -1181,6 +1345,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                         if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                             String name = obj.optString("friendName");
                             int count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, DataUtil.getImage(obj.optString("friendIcon")), time);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                         } else {
                             Log.d(TAG, "syncProposer: obj is " + obj);
                         }
@@ -1190,7 +1355,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 }
         };
         final Map<String, String> params = new HashMap<String, String>();
-        params.put("number", account);
+        params.put("friendNumber", account);
         new DataThread(DataUtil.FRIEND_URL + "requestFriendDetail", params,
                 h.obtainMessage(0)).start();
     }
@@ -1234,8 +1399,12 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         return mContentResolver.query(DatabaseProvider.PROPOSERS_URI, projection, selection, selectionArgs, sortOrder);
     }
 
-    private int deleteProposers(String account) {
-        return mContentResolver.delete(DatabaseProvider.PROPOSERS_URI, DatabaseUtil.Proposer.ACCOUNT + " = ?", new String[]{account});
+    private int deleteProposers(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.PROPOSERS_URI, selection, selectionArgs);
+    }
+
+    private int deleteProposer(String account) {
+        return deleteProposers(DatabaseUtil.Proposer.ACCOUNT + " = ?", new String[]{account});
     }
 
     public void confirmProposer(String account, final String friendAccount, final int request, final Handler handler, final int what) {
@@ -1249,7 +1418,8 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                             int count = updateProposer(friendAccount,
                                     request == REQUEST_CANCEL ? DatabaseUtil.Proposer.STATUS_IGNORE : DatabaseUtil.Proposer.STATUS_FRIEND);
                             if (request == REQUEST_OK) {
-                                logNotification(friendAccount, null, DatabaseUtil.Notification.REQUEST_SELF);
+                                Uri uri = logNotification(friendAccount, DatabaseUtil.Notification.REQUEST_CONFIRM);
+                                if (uri != null) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
                                 checkFriend();
                             } else {
                                 Log.d(TAG, "confirmProposer: cancel for " + friendAccount);
@@ -1285,15 +1455,19 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         return mContentResolver.update(DatabaseProvider.CALLLOGS_URI, values, DatabaseUtil.Calllog.READ + " = ?", new String[]{DatabaseUtil.Calllog.READ_NEW + ""});
     }
 
-    private int deleteCalllog(String account) {
-        return mContentResolver.delete(DatabaseProvider.CALLLOGS_URI, DatabaseUtil.Calllog.ACCOUNT + " = ?", new String[]{account});
+    private int deleteCalllogs(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.CALLLOGS_URI, selection, selectionArgs);
     }
 
-    private Uri logNotification(String account, String id, int request) {
+    private int deleteCalllog(String account) {
+        return deleteCalllogs(DatabaseUtil.Calllog.ACCOUNT + " = ?", new String[]{account});
+    }
+
+    private Uri logNotification(String account, int request) {
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.Notification.TIME, System.currentTimeMillis()/1000);
         values.put(DatabaseUtil.Notification.ACCOUNT, account);
-        values.put(DatabaseUtil.Notification.ID, id);
+        values.put(DatabaseUtil.Notification.ID, "");
         values.put(DatabaseUtil.Notification.REQUEST, request);
         values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_NEW);
         return mContentResolver.insert(DatabaseProvider.NOTIFICATIONS_URI, values);
@@ -1303,19 +1477,33 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         return mContentResolver.query(DatabaseProvider.NOTIFICATIONS_VIEW_URI, projection, selection, selectionArgs, sortOrder);
     }
 
+    private int updateNotification(String account, int request) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.Notification.REQUEST, request);
+        values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_NEW);
+        return mContentResolver.update(DatabaseProvider.NOTIFICATIONS_URI, values, DatabaseUtil.Notification.ACCOUNT + " = ?", new String[]{account});
+    }
+
     public int readNotification() {
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_OLD);
         return mContentResolver.update(DatabaseProvider.NOTIFICATIONS_URI, values, DatabaseUtil.Notification.READ + " = ?", new String[]{DatabaseUtil.Notification.READ_NEW + ""});
     }
 
-    public int deleteNotification(String account) {
-        return mContentResolver.delete(DatabaseProvider.NOTIFICATIONS_URI, DatabaseUtil.Notification.ACCOUNT + " = ?", new String[]{account});
+    private int deleteNotifications(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.NOTIFICATIONS_URI, selection, selectionArgs);
+    }
+
+    private int deleteNotification(String account) {
+        return deleteNotifications(DatabaseUtil.Notification.ACCOUNT + " = ?", new String[]{account});
     }
 
     public ArrayList<Object> getCalllogsAndNotifications() {
         Cursor cursorCalllogs = getCalllogs(null, null, null, DatabaseUtil.Calllog.TIME + " desc");
-        Cursor cursorNotifications = getNotifications(null, null, null, DatabaseUtil.Notification.TIME + " desc");
+        Cursor cursorNotifications = getNotifications(null,
+                DatabaseUtil.Notification.REQUEST + " != " + DatabaseUtil.Notification.REQUEST_FRIEND,
+                null,
+                DatabaseUtil.Notification.TIME + " desc");
 
         ArrayList<Object> arrayList = new ArrayList<Object>();
 
@@ -1443,18 +1631,22 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         return mContentResolver.query(DatabaseProvider.FILES_URI, projection, selection, selectionArgs, sortOrder);
     }
 
+    private int deleteFiles(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.FILES_URI, selection, selectionArgs);
+    }
+
     private boolean loginSip(String account) {
         boolean result = false;
         String sip = "";
 
-        Cursor cursor = getAccounts(null, null, null, null);
+        Cursor cursor = getAccounts(null, TextUtils.isEmpty(account) ? null : DatabaseUtil.Account.ACCOUNT + " = " + account, null, null);
         if (cursor != null && cursor.moveToFirst()) {
             if (DataUtil.IS_APP) {
                 sip = cursor.getString(DatabaseUtil.Account.COLUMN_SIP);
             } else {
                 String id = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
                 if (!TextUtils.isEmpty(id)) {
-                    Cursor c = getDevice(null, DatabaseUtil.Device.ID + " = ?", new String[]{id}, null);
+                    Cursor c = getDevices(null, DatabaseUtil.Device.ID + " = ?", new String[]{id}, null);
                     if (c != null && c.moveToFirst()) {
                         sip = c.getString(DatabaseUtil.Device.COLUMN_SIP);
                     }
@@ -1467,12 +1659,13 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
             Log.d(TAG, "loginSip: account is null");
         }
 
-        if (!TextUtils.isEmpty(sip) && LinphonePreferences.instance().getAccountCount() < 1) {
+        if (!TextUtils.isEmpty(sip)
+                && LinphonePreferences.instance().getAccountCount() < 1) {
             try {
                 AccountBuilder builder = new AccountBuilder(LinphoneManager.getLc())
-                        .setUsername("303")
+                        .setUsername(sip)
                         .setDomain(DataUtil.SIP_DOMAIN)
-                        .setPassword("303")
+                        .setPassword(sip)
                         .setTransport(TransportType.Udp);
                 builder.saveNewAccount();
                 result = true;
@@ -1480,7 +1673,7 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
                 Log.e(TAG, "loginSip: CoreException is ", e);
             } catch (Exception e) {
                 Log.e(TAG, "loginSip: Exception is ", e);
-                result = mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_SIP), LOOP_SIP_TIME);
+                result = mHandler.sendEmptyMessageDelayed(MESSAGE_SIP, LOOP_SIP_TIME);
             }
         }
 
@@ -1494,19 +1687,61 @@ public class DataService extends Service implements ActivityCompat.OnRequestPerm
         }
     }
 
-    private static final int PERMISSIONS_REQUEST_WRITE_CONTACTS = 1;
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_WRITE_CONTACTS){
-            for (int i = 0; i < grantResults.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "[onRequestPermissionsResult]Contacts permission success.", Toast.LENGTH_SHORT).show();
-                    syncContacts(null);
-                } else {
-                    Toast.makeText(this, "[onRequestPermissionsResult]Contacts permission fail.", Toast.LENGTH_SHORT).show();
+    public boolean checkSipRelation(String account, String friendAccount, String id, final Handler handler, final int what) {
+        account = matchAccount(account);
+        if (TextUtils.isEmpty(account) || (TextUtils.isEmpty(friendAccount) && TextUtils.isEmpty(id))) {
+            Log.d(TAG, "checkSipRelation: return false");
+            return false;
+        } else {
+            Log.d(TAG, "checkSipRelation: " + account + " to "
+                    + (TextUtils.isEmpty(friendAccount) ? "id:" + id : "account:" + friendAccount));
+        }
+        Handler h = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    try {
+                        if (!DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            checkAccount();
+                            checkFriend();
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "checkSipRelation: JSONException is ", e);
+                    }
+                    if (handler != null) {
+                        handler.obtainMessage(what, obj).sendToTarget();
+                    } else {
+                        Log.d(TAG, "checkSipRelation: handler is null");
+                    }
                 }
+        };
+        final Map<String, String> params = new HashMap<String, String>();
+        params.put("number", account);
+        if (!TextUtils.isEmpty(friendAccount)) {
+            params.put("friendNumber", friendAccount);
+        }
+        if (!TextUtils.isEmpty(id)) {
+            params.put("deviceId", id);
+        }
+        new DataThread(DataUtil.FRIEND_URL + "isFriend", params,
+                h.obtainMessage(0)).start();
+        return true;
+    }
+
+    public static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 1;
+    public static final int PERMISSIONS_REQUEST_READ_CONTACTS = 2;
+
+    private boolean checkAndRequestPermission(Activity activity, String permission, int request) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && ContextCompat.checkSelfPermission(getApplication(), permission) != PackageManager.PERMISSION_GRANTED) {
+            if (activity == null) {
+                Log.d(TAG, "checkAndRequestPermission: activity is null.");
+            } else {
+                ActivityCompat.requestPermissions(activity, new String[]{permission}, request);
             }
+            return true;
+        } else {
+            return false;
         }
     }
 

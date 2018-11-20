@@ -11,6 +11,8 @@ public class ContactInfo {
      */
     private int contactId;
 
+    private String account;
+
     /**
      * 联系人名称的首字母
      */
@@ -43,6 +45,14 @@ public class ContactInfo {
 
     public void setContactId(int contactId) {
         this.contactId = contactId;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     public String getLetter() {

@@ -434,13 +434,13 @@ public class LinphoneManager implements CoreListener, SensorEventListener, Accou
                 null,
                 DatabaseUtil.Friend.ACCOUNT + " = ?",
                 new String[]{to},
-                null
-        );
-        mLc.setCallLogsFriend(to, "beautymirror");
-
-        while (cursor != null && cursor.moveToNext()) {
+                null);
+        if (cursor != null && cursor.moveToFirst()) {
+            mLc.setCallLogsFriend(to, cursor.getString(DatabaseUtil.Friend.COLUMN_ID));
             to = cursor.getString(DatabaseUtil.Friend.COLUMN_SIP);
         }
+        if (cursor != null) cursor.close();
+        if (to == null) return;
 
         // If to is only a username, try to find the contact to get an alias if existing
         if (!to.startsWith("sip:") || !to.contains("@")) {

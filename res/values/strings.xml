@@ -536,9 +536,12 @@
     <string name="edit_remark_name">编辑备注名</string>
     <string name="remark_name">备注名</string>
     <string name="add_remark_name">添加备注名</string>
+    <string name="add_friend_title">验证消息</string>
+    <string name="add_friend_message">您需要发送验证消息，对方同意后才能添加。</string>
+    <string name="send_add_friend_request">已发送请求</string>
 
-    <string name="nofiticafion_message"> 现在可以和Ta开始美美的视频通话了哦~</string>
-    <string name="nofiticafion_title"> 通过了你的好友请求~</string>
+    <string name="nofiticafion_message"> 现在可以和Ta开始美美的通话了~</string>
+    <string name="nofiticafion_title"> 通过了你的好友请求</string>
     <string name="incoming_calls_notif_title">视频来电</string>
     <string name="outgoing_calls_notif_title">视频呼叫</string>
 
@@ -550,7 +553,7 @@
     <string name="recent_call">最近通话</string>
     <string name="devices">的设备</string>
     <string name="delete_friend_title">删除好友</string>
-    <string name="delete_friend_message"> 将好友"%1$s "删除，会同时删除与该好友的通话记录。</string>
+    <string name="delete_friend_message"> 将好友 \""%1$s"\" 删除，会同时删除与该好友的通话记录。</string>
 
     <string name="switch_audio"> 切到语音模式</string>
     <string name="switch_video">切到视频模式</string>
@@ -559,6 +562,12 @@
     <string name="hang_up">挂断</string>
     <string name="cancel_call">通话已取消</string>
 
+    <string name="no_register_user">您的通讯录中没有注册的用户</string>
+    <string name="to_message">短信邀请好友</string>
+
+    <string name="no_contact_permisson">通讯录权限未开启</string>
+    <string name="setting_permisson">请在手机中设置></string>
+    <string name="to_settings">前往手机设置</string>
 
     <!--cole-->
     <string name="register">register</string>
@@ -590,6 +599,13 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="setting_contact_photo">"Setting avatar"</string>
+    <string name="loading_image" translatable="false">Loading image</string>
+    <string name="select_image">"Select an image"</string>
+    <string name="cannot_load_image">"Unable to load the image"</string>
+    <string name="operation_successed">"Operation successed"</string>
+    <string name="operation_failed">"Operation failed"</string>
+    <string name="setting_head_as_gallery">Setting avatar...</string>
     <!--cole-->
 
 

@@ -51,9 +51,9 @@ public class RecentCallAdapter extends RecyclerView.Adapter<RecentCallAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
         CallLog log = (CallLog) getItem(position);
         holder.callDate.setText(updateRelativeTime(log));
-        if(log.mId.equals("")){
+        if("".equals(log.mId)){
             holder.callAccount.setText(log.mAccount);
-        }else{
+        } else{
             if(log.mComment!=null && !log.mComment.equals("")){
                 holder.callAccount.setText(log.mComment+mContext.getResources().getString(R.string.devices));
             }else if(log.mName!=null && !log.mName.equals("")){
@@ -64,16 +64,16 @@ public class RecentCallAdapter extends RecyclerView.Adapter<RecentCallAdapter.Vi
         }
 
        if(log.mStatus == DatabaseUtil.Calllog.STATUS_MISSED){
-            holder.callDirection.setImageResource(R.drawable.call_status_missed);
-            holder.callDate.setTextColor(Color.RED);
+            holder.callDirection.setImageResource(R.drawable.ic_call_miss);
+           holder.callDate.setTextColor(Color.parseColor("#FFFF7786"));
            holder.callDuration.setText(mContext.getResources().getString(R.string.missed_call)+getDurationText((int)(log.mEndTime-log.mTime)));
         }else{
-           holder.callDate.setTextColor(Color.WHITE);
+           holder.callDate.setTextColor(Color.parseColor("#E6000000"));
            holder.callDuration.setText(getDurationText(log.mDuration));
            if(log.mStatus == DatabaseUtil.Calllog.STATUS_INCOMING){
-               holder.callDirection.setImageResource(R.drawable.call_status_incoming);
+               holder.callDirection.setImageResource(R.drawable.ic_call_in);
            }else if(log.mStatus == DatabaseUtil.Calllog.STATUS_OUTGOING){
-               holder.callDirection.setImageResource(R.drawable.call_status_outgoing);
+               holder.callDirection.setImageResource(R.drawable.ic_call_out);
            }
        }
     }

@@ -2,60 +2,76 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@color/colorH" >
+    android:background="@drawable/bg_dialog"
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:padding="15dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="14dp"
         android:text="@string/edit_remark_name"
-        android:textColor="#000"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        style="@style/dialog_title_font"
         />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="15dp"
-        android:background="@color/colorD" />
+    <LinearLayout
+        android:layout_width="270dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="25dp"
+        android:layout_marginLeft="25dp"
+        android:background="@drawable/bg_dialog_edit"
+        android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/choosepage_edittext"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <EditText
+            android:id="@+id/choosepage_edittext"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@null"
+            android:gravity="center_vertical"
+            android:inputType="text"
+            android:singleLine="true"
+            style="@style/dialog_title_font"
+            android:paddingLeft="20dp" />
+
+        <ImageView
+            android:id="@+id/clear_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingRight="20dp"
+            android:src="@drawable/search_ic_del" />
+
+    </LinearLayout>
 
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="24dp"
         android:layout_marginBottom="20dp"
         android:orientation="horizontal">
 
         <TextView
             android:id="@+id/choosepage_cancel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="20dp"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
+            android:layout_width="120dp"
+            android:layout_height="36dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginLeft="25dp"
+            android:gravity="center"
             android:text="@string/cancle"
-            android:textColor="@color/color_blue"
-            android:textSize="16sp" />
+            android:background="@drawable/bg_button"
+            style="@style/dialog_button_font"/>
 
         <TextView
             android:id="@+id/choosepage_sure"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
+            android:layout_width="120dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:layout_marginRight="25dp"
             android:text="@string/ensure"
-            android:textColor="@color/color_blue"
-            android:textSize="16sp" />
+            android:background="@drawable/bg_button"
+            style="@style/dialog_button_font" />
     </LinearLayout>
 
 </LinearLayout>

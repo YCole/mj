@@ -1,6 +1,7 @@
 package cole.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -114,9 +115,9 @@ public class MyOneLineView extends LinearLayout {
      * @param iconRes     icon图片
      * @param textContent 文字内容
      */
-    public MyOneLineView init(int iconRes, String textContent) {
+    public MyOneLineView init(int iconRes, String textContent,boolean showBottomDevide) {
         init();
-        showDivider(false, true);
+        showDivider(false, showBottomDevide);
         setLeftIcon(iconRes);
         setTextContent(textContent);
         showEdit(false);
@@ -147,8 +148,8 @@ public class MyOneLineView extends LinearLayout {
      * @param iconRes     icon图片
      * @param textContent 文字内容
      */
-    public MyOneLineView initMine(int iconRes, String textContent, String textRight, boolean showArrow) {
-        init(iconRes, textContent);
+    public MyOneLineView  initMine(int iconRes, String textContent, String textRight, boolean showArrow, boolean showBottomDevide) {
+        init(iconRes, textContent, showBottomDevide);
         setRightText(textRight);
         showArrow(showArrow);
         return this;
@@ -177,7 +178,7 @@ public class MyOneLineView extends LinearLayout {
      * @return
      */
     public MyOneLineView initItemWidthEdit(int iconRes, String textContent, String editHint) {
-        init(iconRes, textContent);
+        init(iconRes, textContent,true);
         showEdit(true);
         setEditHint(editHint);
         showArrow(false);
@@ -281,6 +282,11 @@ public class MyOneLineView extends LinearLayout {
      */
     public MyOneLineView setLeftIcon(int iconRes) {
         ivLeftIcon.setImageResource(iconRes);
+        return this;
+    }
+
+    public MyOneLineView setLeftIcon(Bitmap bitmap) {
+        ivLeftIcon.setImageBitmap(bitmap);
         return this;
     }
 

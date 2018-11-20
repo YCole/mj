@@ -147,8 +147,8 @@ public class RequestAdapter extends BaseAdapter {
         private ImageView mAvatar;
         private TextView mName;
         private TextView mNumber;
-        private Button mAccept;
-        private Button mRefuse;
+        private TextView mAccept;
+        private TextView mRefuse;
         private TextView mTvHandleResult;
     }
 

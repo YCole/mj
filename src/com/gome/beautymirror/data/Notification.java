@@ -30,7 +30,8 @@ public class Notification {
         return new StringBuilder().append("time:" + mTime + " ")
                 .append("account:" + mAccount + " ")
                 .append("id:" + mId + " ")
-                .append("request:" + (mRequest == DatabaseUtil.Notification.REQUEST_OTHER ? "Other" : "Self") + " ")
+                .append("request:" + (mRequest == DatabaseUtil.Notification.REQUEST_FRIEND ? "Request"
+                        : (mRequest == DatabaseUtil.Notification.REQUEST_CONFIRM ? "Confirm" : "Confirmed")) + " ")
                 .append("read:" + (mRead == DatabaseUtil.Notification.READ_NEW ? "New" : "Old") + " ")
                 .append("name:" + mName + " ")
                 .append("icon:" + mIcon + " ")

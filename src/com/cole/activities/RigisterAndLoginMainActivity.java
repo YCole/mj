@@ -1,10 +1,12 @@
 package cole.activities;
 
 import android.content.Intent;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 
 import com.gome.beautymirror.R;
+import com.gome.beautymirror.activities.BeautyMirrorActivity;
 
 public class RigisterAndLoginMainActivity extends BaseActivity {
 
@@ -52,5 +54,15 @@ public class RigisterAndLoginMainActivity extends BaseActivity {
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            finish();
+            BeautyMirrorActivity.instance().quit();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

@@ -43,6 +43,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import cole.activities.BaseActivity;
+import gome.beautymirror.ui.MyToast;
 
 
 /**
@@ -176,7 +177,7 @@ public class CaptureActivity extends BaseActivity implements Callback {
                     CaptureActivity.this.setResult(RESULT_OK, resultIntent);
                     finish();
                 } else {
-                    Toast.makeText(CaptureActivity.this, "识别失败", Toast.LENGTH_SHORT).show();
+                    MyToast.showToast(CaptureActivity.this,"识别失败" , Toast.LENGTH_SHORT);
                 }
             }
         });
@@ -278,7 +279,7 @@ public class CaptureActivity extends BaseActivity implements Callback {
         String resultString = result.getText();
         //FIXME
         if (TextUtils.isEmpty(resultString)) {
-            Toast.makeText(CaptureActivity.this, "Scan failed!", Toast.LENGTH_SHORT).show();
+            MyToast.showToast(CaptureActivity.this,"Scan failed!", Toast.LENGTH_SHORT);
         } else {
             Intent resultIntent = new Intent();
             Bundle bundle = new Bundle();
@@ -396,7 +397,7 @@ public class CaptureActivity extends BaseActivity implements Callback {
             try {
                 boolean isSuccess = CameraManager.get().setFlashLight(!isFlashOn);
                 if(!isSuccess){
-                    Toast.makeText(CaptureActivity.this, "暂时无法开启闪光灯", Toast.LENGTH_SHORT).show();
+                    MyToast.showToast(CaptureActivity.this,"暂时无法开启闪光灯", Toast.LENGTH_SHORT);
                     return;
                 }
                 if (isFlashOn) {

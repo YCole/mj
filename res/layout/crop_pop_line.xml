@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="200dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/crop_background"
+    android:orientation="vertical"
+    android:visibility="gone"
+    android:layout_gravity="bottom">
+
+    <TextView
+        android:id="@+id/set_as_lockwallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="20dp"
+        android:textColor="#E6000000"
+        android:textSize="13sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="20dp"
+        android:background="#FFBFC3C7" />
+
+    <TextView
+        android:id="@+id/set_as_wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical"
+        android:textColor="#E6000000"
+        android:layout_marginLeft="20dp"
+        android:textSize="13sp" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="20dp"
+        android:background="#FFBFC3C7" />
+
+    <TextView
+        android:id="@+id/set_as_lockandwallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="20dp"
+        android:textColor="#E6000000"
+        android:textSize="13sp" />
+
+</LinearLayout>

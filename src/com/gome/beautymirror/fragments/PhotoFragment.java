@@ -28,6 +28,8 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.LinearLayout;
+
 import com.gome.beautymirror.advertisement.BannerLayout;
 import com.gome.beautymirror.advertisement.PicassoImageLoader;
 
@@ -39,11 +41,16 @@ import java.util.List;
 
 public class PhotoFragment extends Fragment implements OnClickListener{
 
+   private LinearLayout mActionBar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.photo, container, false);
+
+        mActionBar = view.findViewById(R.id.action_bar);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
 
         //加载广告页
         BannerLayout bannerLayout2 = (BannerLayout) view.findViewById(R.id.banner2);

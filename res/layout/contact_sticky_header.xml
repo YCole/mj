@@ -8,5 +8,4 @@
     android:background="@color/divider_bg_color"
     android:gravity="center_vertical"
     android:paddingLeft="23dp"
-
 />

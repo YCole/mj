@@ -29,7 +29,10 @@
     <color name="colorAccent">#D81B60</color>
 
 
-
+    <color name="crop_shadow_color">#CF000000</color>
+    <color name="crop_shadow_wp_color">#4F000000</color>
+    <color name="crop_wp_markers">#7FFFFFFF</color>
+    <color name="recyclerview_select_all_color">#E62E76FC</color>
 
     <color name="orange_01">#FF4500</color>
     <color name="green_01">#33A993</color>
@@ -257,4 +260,13 @@
     <color name="icon_more">#4D000000</color>
     <color name="divider_bg_color">#FFF5F8FA</color>
     <color name="divider_text_color">#59000000</color>
+    <color name="actionbar_text_color">#FFFFFFFF</color>
+    <color name="empty_text_color">#1F000000</color>
+    <color name="divider_line_color">#1F000000</color>
+    <color name="link_text_color">#FFFB5392</color>
+    <color name="dialog_title_color">#B3000000</color>
+    <color name="dialog_message_color">#66000000</color>
+    <color name="call_out_color">#FF35DA90</color>
+    <color name="call_in_color">#FF61CAE0</color>
+    <color name="call_miss_color">#FFFF7780</color>
 </resources>

@@ -361,7 +361,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
     private void userNameAndPasswordLogin() {
 
-        DataService.instance().loginAccount(phoneNum, mUserPassword, null,
+        DataService.instance().loginAccount(this, phoneNum, mUserPassword, null,
                 new Handler() {
                     @Override
                     public void handleMessage(Message msg) {

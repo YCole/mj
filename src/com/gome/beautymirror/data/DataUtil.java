@@ -1,9 +1,7 @@
 package com.gome.beautymirror.data;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -12,13 +10,8 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 
-import cole.common.P;
-
 public class DataUtil {
     public static final String TAG = DataUtil.class.getSimpleName();
-
-    static final String GET_CODE_SET_PASSWORD_TO_REGISTER = P.PROPOTOL + "://" + P.IP   + P.PORT +P.CKECK_SMS_Register;
-    static final String GET_CODE = P.PROPOTOL + "://" + P.IP   + P.PORT +P.GET_SMS;
 
     public static final boolean IS_APP = true;
 
@@ -29,24 +22,26 @@ public class DataUtil {
 
     public static final String SIP_DOMAIN = "222.190.139.10";
 
-    public static final String BROADCAST_INFO = "BROADCAST_INFO";
+    public static final String BROADCAST_ACCOUNT = "BROADCAST_ACCOUNT";
+    public static final String BROADCAST_FRIEND = "BROADCAST_FRIEND";
+    public static final String BROADCAST_PEOPLE = "BROADCAST_PEOPLE";
+    public static final String BROADCAST_PROPOSER = "BROADCAST_PROPOSER";
+    public static final String BROADCAST_NOTIFICATION = "BROADCAST_NOTIFICATION";
 
-    public static String getDevice(Context context) {
-        String device = "test";
+    public static String getMD5(String str) {
         try {
-            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            String imei = telephonyManager.getDeviceId();
-            Log.d(TAG, "getDevice: imei = " + imei);
-            if (!TextUtils.isEmpty(imei)) {
-                device = imei;
+            if (TextUtils.isEmpty(str)) {
+                str = "test";
+            } else {
+                Log.d(TAG, "getMD5: str is " + str);
             }
             MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(device.getBytes());
-            return new BigInteger(1, md.digest()).toString(16);
+            md.update(str.getBytes());
+            str = new BigInteger(1, md.digest()).toString(16);
         } catch (Exception e) {
-            e.printStackTrace();
-            return device;
+            throw new RuntimeException("getMD5: " + e.getMessage(), e);
         }
+        return str;
     }
 
     public static byte[] getImage(Bitmap bitmap) {

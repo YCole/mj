@@ -83,7 +83,7 @@ public class ContactsManager extends ContentObserver implements FriendListListen
 
     private ContactsManager() {
         super(LinphoneService.instance().mHandler);
-        defaultAvatar = BitmapFactory.decodeResource(LinphoneService.instance().getResources(), R.drawable.avatar);
+        defaultAvatar = BitmapFactory.decodeResource(LinphoneService.instance().getResources(), R.drawable.image_head);
         contactsUpdatedListeners = new ArrayList<>();
         mSipContacts = new ArrayList<>();
         if (LinphoneManager.getLcIfManagerNotDestroyedOrNull() != null) {
@@ -331,13 +331,12 @@ public class ContactsManager extends ContentObserver implements FriendListListen
         List<com.gome.beautymirror.contacts.LinphoneContact> sipContacts = new ArrayList<>();
         if (c != null) {
             while (c.moveToNext()) {
-                String displayName = c.getString(DatabaseUtil.Friend.COLUMN_NAME);
-                String data1 = c.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT); //账号
-                String remarkName=c.getString(DatabaseUtil.Friend.COLUMN_COMMENT);
-                if(displayName==null || displayName.equals("")){
-                    displayName=data1;
-                }
                 com.gome.beautymirror.contacts.LinphoneContact contact = new com.gome.beautymirror.contacts.LinphoneContact();
+                contact.setAccount(c.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT));
+                String displayName = c.getString(DatabaseUtil.Friend.COLUMN_NAME);
+                if(displayName==null || displayName.equals("")){
+                    displayName=contact.getAccount();
+                }
                 contact.setFullName(displayName);
                 String letter = String.valueOf(Pinyin.toPinyin(displayName.charAt(0)).toUpperCase().charAt(0));
                 //非字母开头的统一设置成 "#"
@@ -346,8 +345,9 @@ public class ContactsManager extends ContentObserver implements FriendListListen
                 } else {
                     contact.setLetter("#");
                 }
-                contact.addNumberOrAddress(new com.gome.beautymirror.contacts.LinphoneNumberOrAddress(data1, true));
-                contact.setRemarkName(remarkName);
+                contact.addNumberOrAddress(new com.gome.beautymirror.contacts.LinphoneNumberOrAddress(contact.getAccount(), true));
+                contact.setRemarkName(c.getString(DatabaseUtil.Friend.COLUMN_COMMENT));
+                contact.setIcon(c.getBlob(DatabaseUtil.Friend.COLUMN_ICON));
                 if (!sipContacts.contains(contact)) {
                     sipContacts.add(contact);
                 }

@@ -43,6 +43,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -54,6 +55,7 @@ import com.gome.beautymirror.R;
 import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.fragments.FragmentsAvailable;
 import com.gome.beautymirror.ui.SelectableHelper;
+import com.gome.beautymirror.contacts.ContactListActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,14 +65,19 @@ import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 
 import gome.beautymirror.contacts.newfriend.RequestInfo;
+import gome.beautymirror.contacts.newfriend.SearchContactsAdapter;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import com.gome.beautymirror.data.DataUtil;
 
-public class ContactsListFragment extends Fragment implements OnItemClickListener, ContactsUpdatedListener, ContactsListAdapter.ViewHolder.ClickListener, SelectableHelper.DeleteListener {
+public class ContactsListFragment extends Fragment implements OnItemClickListener,
+        ContactsUpdatedListener,
+        ContactsListAdapter.ViewHolder.ClickListener,
+        SearchContactsAdapter.ViewHolder.ClickListener,
+        SelectableHelper.DeleteListener {
     private RecyclerView contactsList;
-    private TextView noContact,newContact,goto_contacts,no_search_result;
+    private TextView noContact,goto_contacts;
+    private ImageView newContact;
+    private LinearLayout actionBar,noContactLayout,noSearchResultLayout;
     private ImageView edit;
     private int lastKnownPosition;
     private boolean editOnClick = false, editConsumed = false;
@@ -81,12 +88,16 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     private Context mContext;
     private SelectableHelper mSelectionHelper;
     private ContactsListAdapter mContactAdapter;
+    private SearchContactsAdapter mSearchAdapter;
     private RelativeLayout mRlNewFriend;
     private TextView mRequestNum;
     ArrayList<RequestInfo> mData = new ArrayList();
 
     List<LinphoneContact> listContact;
+    List<LinphoneContact> mSearchContact;
     private FrameLayout listLayout;
+    private LinearLayout mLlNewFriend;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.contacts_list, container, false);
@@ -94,10 +105,12 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         mSelectionHelper = new SelectableHelper(view, this);
 
         noContact = view.findViewById(R.id.noContact);
+        noContactLayout =  view.findViewById(R.id.no_Contact);
         contactsList = view.findViewById(R.id.contactsList);
         listLayout = view.findViewById(R.id.list_layout);
+        mLlNewFriend = view.findViewById(R.id.ll_new_friend);
         goto_contacts = view.findViewById(R.id.goto_contacts);
-        no_search_result = view.findViewById(R.id.no_search_result);
+        noSearchResultLayout = view.findViewById(R.id.no_search_result);
         edit = view.findViewById(R.id.edit);
         contactsFetchInProgress = view.findViewById(R.id.contactsFetchInProgress);
         newContact = view.findViewById(R.id.newContact);
@@ -105,13 +118,16 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             @Override
             public void onClick(View v) {
                 editConsumed = true;
+                startActivity(new Intent(getActivity(), ContactListActivity.class));
             }
         });
 
+        actionBar = view.findViewById(R.id.action_bar);
+        actionBar.setPadding(0,BeautyMirrorActivity.getStatusBarHeight(getContext()),0,0);
         goto_contacts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), com.gome.beautymirror.contacts.ContactListActivity.class));
+                startActivity(new Intent(getActivity(), ContactListActivity.class));
             }
         });
 
@@ -123,9 +139,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         mRlNewFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent mIntent= new Intent(getActivity(), com.gome.beautymirror.contacts.NewFriendActivity.class);
-                mIntent.putParcelableArrayListExtra("FRIEND_REQUEST",mData);
-                startActivity(mIntent);
+                gotoNewFriendActivity();
             }
         });
 
@@ -139,6 +153,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         });
 
         final TextView tvStickyHeaderView = (TextView) view.findViewById(R.id.tv_contact_header);
+        tvStickyHeaderView.setVisibility(View.GONE);
 
         searchField = view.findViewById(R.id.searchField);
         searchField.addTextChangedListener(new TextWatcher() {
@@ -156,22 +171,20 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             @Override
             public void afterTextChanged(Editable s) {
                 String searchKey = s.toString().trim();
+                tvStickyHeaderView.setVisibility(View.GONE);
                 if(searchContacts(searchKey).size()==0){
-                    tvStickyHeaderView.setVisibility(View.GONE);
                     listLayout.setVisibility(View.GONE);
-                    no_search_result.setVisibility(View.VISIBLE);
+                    noSearchResultLayout.setVisibility(View.VISIBLE);
                 }else{
                     listLayout.setVisibility(View.VISIBLE);
                 }
                 if (TextUtils.isEmpty(searchKey)) {
                     clearSearchField.setVisibility(View.GONE);
-                    goto_contacts.setVisibility(View.VISIBLE);
-                    noContact.setVisibility(View.VISIBLE);
-                    no_search_result.setVisibility(View.GONE);
+                    noContactLayout.setVisibility(View.VISIBLE);
+                    noSearchResultLayout.setVisibility(View.GONE);
                 } else {
                     clearSearchField.setVisibility(View.VISIBLE);
-                    goto_contacts.setVisibility(View.GONE);
-                    noContact.setVisibility(View.GONE);
+                    noContactLayout.setVisibility(View.GONE);
 
                 }
             }
@@ -202,13 +215,19 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
                     int transViewStatus = (int) transInfoView.getTag();
                     int dealtY = transInfoView.getTop() - tvStickyHeaderView.getMeasuredHeight();
                     if (transViewStatus == ContactsListAdapter.HAS_STICKY_VIEW) {
+                        tvStickyHeaderView.setVisibility(View.VISIBLE);
                         if (transInfoView.getTop() > 0) {
                             tvStickyHeaderView.setTranslationY(dealtY);
                         } else {
                             tvStickyHeaderView.setTranslationY(0);
                         }
                     } else if (transViewStatus == ContactsListAdapter.NONE_STICKY_VIEW) {
+                        tvStickyHeaderView.setVisibility(View.VISIBLE);
                         tvStickyHeaderView.setTranslationY(0);
+                    }else if(transViewStatus ==ContactsListAdapter.NEW_FRIEND_STICKY_VIEW){
+                        tvStickyHeaderView.setVisibility(View.GONE);
+                    }else{
+                        tvStickyHeaderView.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -250,13 +269,13 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         Cursor cursor = DataService.instance().getProposers(null, null, null, DatabaseUtil.Proposer.REQUEST_TIME + " desc");
         android.util.Log.d("zlm","cursor.getCount()="+cursor.getCount());
         if (cursor != null && cursor.getCount() > 0) {
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.avatar);
+            byte[] defaultBytes = DataUtil.getImage(ContactsManager.getInstance().getDefaultAvatarBitmap());
             if (cursor.moveToFirst()) {
                 do {
                     android.util.Log.d("zlm","new RequestInfo");
                     byte[] bytes = cursor.getBlob(DatabaseUtil.Proposer.COLUMN_ICON);
                     if (bytes == null) {
-                        bytes = DataUtil.getImage(bitmap);
+                        bytes = defaultBytes;
                     }
                     RequestInfo info = new RequestInfo(
                             bytes,
@@ -303,18 +322,12 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
                 mSearchList.add(info);
             }
         }
-        if (mContactAdapter != null && mContactAdapter.isEditionEnabled()) {
-            isEditionEnabled = true;
-        }
+        mSearchAdapter= new SearchContactsAdapter(mContext, mSearchList, this, search);
 
-        mContactAdapter = new ContactsListAdapter(mContext, mSearchList, this, mSelectionHelper ,true);
-
-//      contactsList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-        mSelectionHelper.setAdapter(mContactAdapter);
         if (isEditionEnabled) {
             mSelectionHelper.enterEditionMode();
         }
-        contactsList.setAdapter(mContactAdapter);
+        contactsList.setAdapter(mSearchAdapter);
         return mSearchList;
     }
 
@@ -324,34 +337,46 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         boolean isEditionEnabled = false;
         if (searchField.getText().toString() == null || searchField.getText().toString().length() == 0) {
             listContact = ContactsManager.getInstance().getSIPContacts();
+
+            if (mContactAdapter != null && mContactAdapter.isEditionEnabled()) {
+                isEditionEnabled = true;
+            }
+
+            mContactAdapter = new ContactsListAdapter(mContext, listContact, this, mSelectionHelper,false);
+            mContactAdapter.addHeadView(View.inflate(getActivity().getApplicationContext(),R.layout.contacts_list_head,null));
+
+            mSelectionHelper.setAdapter(mContactAdapter);
+
+            if (isEditionEnabled) {
+                mSelectionHelper.enterEditionMode();
+            }
+            contactsList.setAdapter(mContactAdapter);
+            edit.setEnabled(true);
+
+            mContactAdapter.notifyDataSetChanged();
+
+            if (mContactAdapter.getItemCount() > 0) {
+                contactsFetchInProgress.setVisibility(View.GONE);
+            }
+
         } else {
-            listContact = searchContacts(searchField.getText().toString());
+            mSearchContact = searchContacts(searchField.getText().toString());
+
+            mSearchAdapter = new SearchContactsAdapter(mContext, mSearchContact, this,searchField.getText().toString());
+
+            contactsList.setAdapter(mSearchAdapter);
+            edit.setEnabled(true);
+
+            mSearchAdapter.notifyDataSetChanged();
+
         }
 
-        if (mContactAdapter != null && mContactAdapter.isEditionEnabled()) {
-            isEditionEnabled = true;
-        }
-
-        mContactAdapter = new ContactsListAdapter(mContext, listContact, this, mSelectionHelper,false);
-
-        mSelectionHelper.setAdapter(mContactAdapter);
-
-        if (isEditionEnabled) {
-            mSelectionHelper.enterEditionMode();
-        }
-        contactsList.setAdapter(mContactAdapter);
-        edit.setEnabled(true);
-
-        mContactAdapter.notifyDataSetChanged();
-
-        if (mContactAdapter.getItemCount() > 0) {
-            contactsFetchInProgress.setVisibility(View.GONE);
-        }
 
     }
 
     @Override
     public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
+
         LinphoneContact contact = (LinphoneContact) adapter.getItemAtPosition(position);
         if (editOnClick) {
             editConsumed = true;
@@ -360,8 +385,33 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         }
     }
 
+
     @Override
-    public void onItemClicked(int position,boolean isCall) {
+    public void onSearchItemClicked(int position,boolean isCall) {
+        LinphoneContact contact = (LinphoneContact) mContactAdapter.getItem(position);
+        if (isCall) {
+            for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
+                String value = noa.getValue();
+                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(value, contact.getFullName(), contact.getPhotoUri());
+            }
+        } else {
+            if (position < mContactAdapter.getItemCount()) {
+                BeautyMirrorActivity.instance().displayContact(contact, false);
+            }
+        }
+    }
+
+    @Override
+    public void onItemClicked(int position,boolean isCall, boolean isNewFriend, boolean isMyDevice) {
+        if(position == 0 ){
+            if(isNewFriend){
+               gotoNewFriendActivity();
+            }else if(isMyDevice){
+
+            }
+            return;
+        }
+        position--;
         LinphoneContact contact = (LinphoneContact) mContactAdapter.getItem(position);
 
         if (mContactAdapter.isEditionEnabled()) {
@@ -394,9 +444,10 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         return true;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void refreshData(){
+        if (!isAdded()) {
+            return;
+        }
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(new Runnable() {
             @Override
@@ -406,6 +457,12 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
                 mHandler.sendEmptyMessage(0);
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshData();
 
         ContactsManager.addContactsListener(this);
 
@@ -443,16 +500,16 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     }
 
     private void refresh(){
-        noContact.setVisibility(View.GONE);
-        goto_contacts.setVisibility(View.GONE);
+        noContactLayout.setVisibility(View.GONE);
         listContact = ContactsManager.getInstance().getSIPContacts();
         if(listContact.size() == 0){
+            mLlNewFriend.setVisibility(View.VISIBLE);
             listLayout.setVisibility(View.GONE);
-            noContact.setVisibility(View.VISIBLE);
-            goto_contacts.setVisibility(View.VISIBLE);
+            noContactLayout.setVisibility(View.VISIBLE);
             contactsFetchInProgress.setVisibility(View.GONE);
         }else{
             listLayout.setVisibility(View.VISIBLE);
+            mLlNewFriend.setVisibility(View.GONE);
         }
     }
 
@@ -479,5 +536,11 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             }
         }
         ContactsManager.getInstance().deleteMultipleContactsAtOnce(ids);
+    }
+
+    private void gotoNewFriendActivity(){
+        Intent mIntent= new Intent(getActivity(), com.gome.beautymirror.contacts.NewFriendActivity.class);
+        mIntent.putParcelableArrayListExtra("FRIEND_REQUEST",mData);
+        startActivity(mIntent);
     }
 }

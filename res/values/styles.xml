@@ -195,14 +195,21 @@
     </style>
 
 
-<!--cole add start-->
+    <!--cole add start-->
     <style name="myAppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowTranslucentStatus" tools:targetApi="kitkat">true</item>
         <item name="android:windowIsTranslucent">true</item>
-
+    </style>
+    <style name="myWelcomeAppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowTranslucentStatus" tools:targetApi="kitkat">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@drawable/login_background</item>
     </style>
 
     <style name="RedTiltleText" parent="@android:style/Widget.TextView">
@@ -212,17 +219,14 @@
     </style>
 
 
-
-    <style name="Transparent"
-        parent="Theme.AppCompat.Light.NoActionBar"
-        >
+    <style name="Transparent" parent="Theme.AppCompat.Light.NoActionBar">
 
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowBackground">@color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds" tools:targetApi="lollipop">false </item>
+        <item name="android:windowDrawsSystemBarBackgrounds" tools:targetApi="lollipop">false</item>
 
 
         <item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>
@@ -249,21 +253,63 @@
 
 
     <!--Contact start-->
-    <style name="contact_name_font" >
+    <style name="contact_name_font">
         <item name="android:textColor">@color/contact_name_up</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="contact_account_font">
+        <item name="android:textColor">@color/contact_name_down</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="separator_font">
+        <item name="android:textColor">@color/divider_text_color</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="topbar_font">
+        <item name="android:textColor">@color/actionbar_text_color</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="empty_font">
+        <item name="android:textColor">@color/empty_text_color</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="link_font">
+        <item name="android:textColor">@color/link_text_color</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">"FZLTHK--GBK1-0"</item>
+    </style>
+
+    <style name="dialog_title_font">
+        <item name="android:textColor">@color/dialog_title_color</item>
         <item name="android:textSize">15sp</item>
     </style>
 
-    <style name="contact_account_font" >
-        <item name="android:textColor">@color/contact_name_down</item>
+    <style name="dialog_button_font">
+        <item name="android:textColor">@color/link_text_color</item>
         <item name="android:textSize">13sp</item>
     </style>
 
-    <style name="separator_font" >
-        <item name="android:textColor">@color/divider_text_color</item>
+    <style name="dialog_message_font">
+        <item name="android:textColor">@color/dialog_message_color</item>
         <item name="android:textSize">12sp</item>
     </style>
 
+    <style name="MyDialog" parent="android:style/Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 
 
 </resources>

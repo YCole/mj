@@ -62,6 +62,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.io.IOException;
 
+import android.database.Cursor;
+import com.gome.beautymirror.data.DataService;
+import com.gome.beautymirror.data.provider.DatabaseUtil;
+
 public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements OnClickListener ,SurfaceHolder.Callback{
     private static CallOutgoingActivity instance;
 
@@ -219,6 +223,32 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
             name.setText(contact.getFullName());
         } else {
             name.setText(LinphoneUtils.getAddressDisplayName(address));
+            String sip = LinphoneUtils.getAddressDisplayName(address);
+            if (sip != null && !"".equals(sip)) {
+                Cursor cursor = DataService.instance().getFriendForSip(sip);
+                String account = "";
+                String device = "";
+                if (cursor != null && cursor.moveToFirst()) {
+                    account = cursor.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT);
+                    if (sip.equals(cursor.getString(DatabaseUtil.Friend.COLUMN_DEVICE_SIP))) {
+                        device = cursor.getString(DatabaseUtil.Friend.COLUMN_ID);
+                    }
+                    name.setText(account + " " + device);
+                    LinphoneManager.getLc().setCallLogsFriend(account, device);
+                } else {
+                    if (cursor != null) cursor.close();
+                    cursor = DataService.instance().getAccountForSip(sip);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        account = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
+                        if (sip.equals(cursor.getString(DatabaseUtil.Account.COLUMN_DEVICE_SIP))) {
+                            device = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
+                        }
+                        name.setText(account + " " + device);
+                        LinphoneManager.getLc().setCallLogsFriend(account, device);
+                    }
+                }
+                if (cursor != null) cursor.close();
+            }
         }
         number.setText(address.asStringUriOnly());
     }
@@ -346,11 +376,13 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
     @Override
     public void surfaceCreated(SurfaceHolder holder){
         mCamera = getCameraInstance();
-        try {
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
-        } catch(IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+        if (null != mCamera) {
+            try {
+                mCamera.setPreviewDisplay(holder);
+                mCamera.startPreview();
+            } catch (IOException e) {
+                Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+            }
         }
     }
 
@@ -358,7 +390,9 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height){
         refreshCamera();
         int rotation = getDisplayOrientation();
-        mCamera.setDisplayOrientation(rotation);
+        if (null != mCamera) {
+            mCamera.setDisplayOrientation(rotation);
+        }
     }
 
     @Override

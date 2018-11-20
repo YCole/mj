@@ -440,8 +440,8 @@
     <string name="contact_friend_request">好友请求</string>
     <string name="contact_new_friend">新朋友</string>
     <string name="contact_accept">接受</string>
-    <string name="contact_refuse">拒绝</string>
-    <string name="contact_accepted">已接受</string>
+    <string name="contact_refuse">忽略</string>
+    <string name="contact_accepted">已添加</string>
     <string name="contact_refused">已拒绝</string>
     <string name="contact_new_request_num"> %1$d 个请求添加好友</string>
     <string name="contact_detail_device">的设备</string>
@@ -483,6 +483,13 @@
     <string name="binddeviceid">绑定设备</string>
     <string name="magic">美镜</string>
     <string name="phonelist">通讯录</string>
+    <string name="setting_contact_photo">"设置头像"</string>
+    <string name="loading_image" msgid="1200894415793838191">"正在加载图片"</string>
+    <string name="select_image" msgid="7841406150484742140">"选择照片"</string>
+    <string name="cannot_load_image" msgid="5023634941212959976">"无法加载该图片！"</string>
+    <string name="operation_successed">"操作成功"</string>
+    <string name="operation_failed">"操作失败"</string>
+    <string name="setting_head_as_gallery">正在设置头像</string>
     <!--cole-->
 
 
