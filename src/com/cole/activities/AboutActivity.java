@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -23,6 +24,7 @@ public class AboutActivity  extends BaseActivity  {
     private TextView mTvTitleName;
     private MyOneLineView mAccount;
     private String mStrAccount;
+    private ImageView mBtBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +52,8 @@ public class AboutActivity  extends BaseActivity  {
         mActionBar = findViewById(R.id.action_bar);
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
         mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
+        mBtBack = findViewById(R.id.bt_back);
+
         mTvTitleName=findViewById(R.id.tv_title_name);
         mTvTitleName.setText("关于美镜");
 
@@ -70,5 +74,11 @@ public class AboutActivity  extends BaseActivity  {
 
     @Override
     protected void setListener() {
+        mBtBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 }

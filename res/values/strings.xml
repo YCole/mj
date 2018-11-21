@@ -540,8 +540,9 @@
     <string name="add_friend_message">您需要发送验证消息，对方同意后才能添加。</string>
     <string name="send_add_friend_request">已发送请求</string>
 
-    <string name="nofiticafion_message"> 现在可以和Ta开始美美的通话了~</string>
-    <string name="nofiticafion_title"> 通过了你的好友请求</string>
+    <string name="information_message"> 现在可以和Ta开始美美的通话了~</string>
+    <string name="information_title_confirmed"> 通过了你的好友请求</string>
+    <string name="information_title_confirm"> 你已经添加了用户</string>
     <string name="incoming_calls_notif_title">视频来电</string>
     <string name="outgoing_calls_notif_title">视频呼叫</string>
 
@@ -607,6 +608,20 @@
     <string name="delete_photo">删除照片</string>
     <string name="take_photo">拍摄新照片</string>
     <string name="select_photo_from_gallery">从相册中选择照片</string>
+    <string name="my_device">我的设备</string>
+    <string name="instructions">使用说明</string>
+    <string name="about_beautymirror">关于美镜</string>
+    <string name="bound_device">设备已绑定</string>
+    <string name="no_bind_device">你还未绑定设备</string>
+    <string name="device_name_title">名称</string>
+    <string name="sync_gallery_title">实时同步魔镜相册</string>
+    <string name="sync_gallery_message">实时同步魔镜相册中的照片和视频到手机相册</string>
+    <string name="unbind_device">解除绑定</string>
+    <string name="bind_device">绑定设备</string>
+    <string name="edit_device_name">编辑设备名称</string>
+    <string name="dialog_unbind_device_title">解除设备绑定</string>
+    <string name="dialog_unbind_device_message">解除绑定将清除设备上所有的数据，确定要解除绑定吗？</string>
+    <string name="dialog_unbind_button_ok">解绑</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

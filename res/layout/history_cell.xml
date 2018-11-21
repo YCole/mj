@@ -90,7 +90,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/ll_notification"
+                android:id="@+id/ll_information"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -103,25 +103,39 @@
                     android:layout_height="match_parent">
 
                     <TextView
-                        android:id="@+id/notification_name"
+                        android:id="@+id/information_confirmed"
                         style="@style/contact_name_font"
                         android:lines="1"
                         android:maxLines="1"
                         android:ellipsize="end"
                         android:text="unknown"
                         android:gravity="center_vertical"
-                        android:layout_width="70dp"
-                        android:layout_height="match_parent" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:maxWidth="70dp" />
 
                     <TextView
-                        android:id="@+id/notification_title"
-                        android:layout_marginRight="20dp"
+                        android:id="@+id/information_title"
                         style="@style/contact_name_font"
                         android:lines="1"
                         android:gravity="center_vertical"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:layout_toRightOf="@id/notification_name" />
+                        android:layout_toRightOf="@id/information_confirmed" />
+
+                    <TextView
+                        android:id="@+id/information_confirm"
+                        style="@style/contact_name_font"
+                        android:lines="1"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="unknown"
+                        android:gravity="center_vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:maxWidth="70dp"
+                        android:layout_marginRight="20dp"
+                        android:layout_toRightOf="@id/information_title" />
                 </LinearLayout>
 
 
@@ -134,13 +148,13 @@
                     <TextView
                         style="@style/contact_account_font"
                         android:lines="1"
-                        android:text="@string/nofiticafion_message"
+                        android:text="@string/information_message"
                         android:layout_marginBottom="2dp"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent" />
 
                     <TextView
-                        android:id="@+id/notification_date"
+                        android:id="@+id/information_date"
                         style="@style/contact_account_font"
                         android:lines="1"
                         android:ellipsize="end"

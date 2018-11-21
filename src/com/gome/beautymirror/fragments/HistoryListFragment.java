@@ -46,6 +46,7 @@ import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.call.CallHistoryAdapter;
 import com.gome.beautymirror.contacts.ContactsManager;
 import com.gome.beautymirror.contacts.ContactsUpdatedListener;
+import com.gome.beautymirror.fragments.FragmentsAvailable;
 import android.content.Intent;
 import com.gome.beautymirror.ui.SelectableHelper;
 
@@ -187,7 +188,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         ContactsManager.addContactsListener(this);
 
         if (BeautyMirrorActivity.isInstanciated()) {
-            BeautyMirrorActivity.instance().selectMenu(com.gome.beautymirror.fragments.FragmentsAvailable.HISTORY_LIST);
+            BeautyMirrorActivity.instance().selectMenu(FragmentsAvailable.HISTORY_LIST);
             BeautyMirrorActivity.instance().hideTabBar(false);
             BeautyMirrorActivity.instance().displayMissedCalls(0);
         }
@@ -240,10 +241,16 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
     @Override
     public void onContactsUpdated() {
         BeautyMirrorActivity.instance().refreshBagdeNumber(getMissedCallLogsAndInformations());
-        if (!BeautyMirrorActivity.isInstanciated() || BeautyMirrorActivity.instance().getCurrentFragment() != com.gome.beautymirror.fragments.FragmentsAvailable.HISTORY_LIST)
+        if (!BeautyMirrorActivity.isInstanciated()
+                || (BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.PHOTO
+                && BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.HISTORY_LIST
+                && BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.CONTACTS_LIST))
             return;
         CallHistoryAdapter adapter = (CallHistoryAdapter) historyList.getAdapter();
         if (adapter != null) {
+            mLogs = getCalllogsAndInformations();
+            mLogs = deleteSameLogs();
+            adapter.updateDataSet(list_key);
             adapter.notifyDataSetChanged();
         }
     }
@@ -350,35 +357,17 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
     }
 
     public int getMissedCallLogsAndInformations(){
-        int count =0;
-        ArrayList<Object> mMissedLogs = getCalllogsAndInformations();
-        if(mMissedLogs!=null && mMissedLogs.size()>0){
-            for(int i = 0; i < mMissedLogs.size(); i++){
-                if (mMissedLogs.get(i) instanceof CallLog) {
-                    if(((CallLog) mMissedLogs.get(i)).mRead == 0 ){
-                        count++;
-                    }
-                }else{
-                    if(((Information) mMissedLogs.get(i)).mRead == 0 ){
-                        count++;
-                    }
-                }
-            }
+        int count = 0;
+        if (DataService.isReady()){
+            count = DataService.instance().getUnreadCount();
         }
         return count;
     }
 
     public void setReadedCallLogsAndInformations(){
-        if(mLogs!=null && mLogs.size()>0){
-            for(int i = 0; i < mLogs.size(); i++){
-                if (mLogs.get(i) instanceof CallLog) {
-                    ((CallLog) mLogs.get(i)).mRead =1;
-                    DataService.instance().readCalllog();
-                }else{
-                    ((Information) mLogs.get(i)).mRead =1;
-                    DataService.instance().readInformation();
-                }
-            }
+        if (DataService.isReady()){
+            DataService.instance().readCalllog();
+            DataService.instance().readInformation();
         }
     }
 }

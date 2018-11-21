@@ -129,9 +129,9 @@ public class MineFragment extends Fragment {
         mivIcon = (RoundImageView) view.findViewById(R.id.iv_mine_fragment_icon);
         gotoEdit = (Button) view.findViewById(R.id.BT_edit_mine);
 
-        mMyDevices.initMine(R.drawable.me_ic_mirror, "我的设备", "", true, true);
-        mUses.initMine(R.drawable.me_ic_illustration, "使用说明", "", true, true);
-        mAbout.initMine(R.drawable.me_ic_about, "关于美镜", "", true, false);
+        mMyDevices.initMine(R.drawable.me_ic_mirror, mContext.getString(R.string.my_device), "", true,true);
+        mUses.initMine(R.drawable.me_ic_illustration, mContext.getString(R.string.instructions), "", true,true);
+        mAbout.initMine(R.drawable.me_ic_about, mContext.getString(R.string.about_beautymirror), "", true,false);
         mEditMine.setText("编辑个人信息");
         mEditMine.setTextSize(20);
 
@@ -162,8 +162,12 @@ public class MineFragment extends Fragment {
         mMyDevices.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {
             @Override
             public void onRootClick(View view) {
-
-
+                startActivity(new Intent(getContext(), MyDeviceActivity.class));
+            }
+        }, 2);
+        mUses.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {
+            @Override
+            public void onRootClick(View view) {
                 Intent intent = new Intent();
 
                 if (Build.VERSION.SDK_INT < 19) {
@@ -175,14 +179,6 @@ public class MineFragment extends Fragment {
                     intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
                 }
                 startActivityForResult(intent, 1);
-
-
-            }
-        }, 2);
-        mUses.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {
-            @Override
-            public void onRootClick(View view) {
-
             }
         }, 3);
         mAbout.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {

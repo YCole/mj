@@ -833,7 +833,9 @@ public class DataService extends Service {
                                             if (!TextUtils.isEmpty(id)) {
                                                 if (!id.equals(friend.getId())) {
                                                     int count = updateFriendAndDevice(account, id);
-                                                    Uri uri = saveFriendDevice(id, null, obj.optString("deviceSip"));
+                                                    Uri uri = saveFriendDevice(id, null, data.optString("deviceSip"));
+                                                } else {
+                                                    int count = updateFriendDevice(id, null, data.optString("deviceSip"));
                                                 }
                                             } else {
                                                 if (!TextUtils.isEmpty(id)) {
@@ -854,7 +856,7 @@ public class DataService extends Service {
                                                         id,
                                                         data.optString("friendComment"),
                                                         data.getString("accountSip"));
-                                                uri = saveFriendDevice(id, null, obj.optString("deviceSip"));
+                                                uri = saveFriendDevice(id, null, data.optString("deviceSip"));
                                             } else {
                                                 Uri uri = saveFriend(account,
                                                         null,
@@ -1063,6 +1065,15 @@ public class DataService extends Service {
         return mContentResolver.insert(DatabaseProvider.FRIENDDEVICES_URI, values);
     }
 
+    private int updateFriendDevice(String id, String name, String sip) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.FriendDevice.TYPE, DatabaseUtil.Device.TYPE_MIRROR);
+        values.put(DatabaseUtil.FriendDevice.DEVICE_NAME, name);
+        values.put(DatabaseUtil.FriendDevice.DEVICE_SIP, sip);
+        values.put(DatabaseUtil.FriendDevice.DEVICE_TIME, 0L);
+        return mContentResolver.update(DatabaseProvider.FRIENDDEVICES_URI, values, DatabaseUtil.FriendDevice.ID + " = ?", new String[]{id});
+    }
+
     private Cursor getFriendDevices(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         return mContentResolver.query(DatabaseProvider.FRIENDDEVICES_URI, projection, selection, selectionArgs, sortOrder);
     }
@@ -1080,10 +1091,14 @@ public class DataService extends Service {
     }
 
     public Cursor getFriendForSip(String sip) {
-        return getFriendsAndDevices(null,
+        Cursor cursor = getFriendsAndDevices(null,
                 DatabaseUtil.Friend.SIP + " = ? or " + DatabaseUtil.Friend.DEVICE_SIP + " = ?",
                 new String[]{sip, sip},
                 null);
+        if (cursor == null || cursor.getCount() < 1) {
+            checkFriend();
+        }
+        return cursor;
     }
     /* } */
 
@@ -1472,7 +1487,6 @@ public class DataService extends Service {
                                 Uri uri = logInformation(friendAccount, DatabaseUtil.Information.REQUEST_CONFIRM);
                                 if (uri != null) {
                                     sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                                    showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
                                 }
                                 checkFriend();
                             } else {
@@ -1535,7 +1549,7 @@ public class DataService extends Service {
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.Information.REQUEST, request);
         values.put(DatabaseUtil.Information.READ, DatabaseUtil.Information.READ_NEW);
-        return mContentResolver.update(DatabaseProvider.INFORMATIONS_URI, values, DatabaseUtil.Information.ACCOUNT + " = ?", new String[]{account});
+        return mContentResolver.update(DatabaseProvider.INFORMATIONS_URI, values, DatabaseUtil.Information.ACCOUNT + " = ? and " + DatabaseUtil.Information.REQUEST + " = " + DatabaseUtil.Information.REQUEST_FRIEND, new String[]{account});
     }
 
     public int readInformation() {
@@ -1672,6 +1686,23 @@ public class DataService extends Service {
         if (cursorInformations != null) cursorInformations.close();
 
         return arrayList;
+    }
+
+    public int getUnreadCount() {
+        int count = 0;
+        Cursor cursorCalllogs = getCalllogs(null, DatabaseUtil.Calllog.READ + " = " + DatabaseUtil.Calllog.READ_NEW, null, null);
+        Cursor cursorInformations = getInformations(null,
+                DatabaseUtil.Information.REQUEST + " != " + DatabaseUtil.Information.REQUEST_FRIEND + " and " + DatabaseUtil.Information.READ + " = " + DatabaseUtil.Information.READ_NEW,
+                null, null);
+        if (cursorCalllogs != null) {
+            count = count + cursorCalllogs.getCount();
+            cursorCalllogs.close();
+        }
+        if (cursorInformations != null) {
+            count = count + cursorInformations.getCount();
+            cursorInformations.close();
+        }
+        return count;
     }
 
     public Uri saveFile(String name, int status) {
