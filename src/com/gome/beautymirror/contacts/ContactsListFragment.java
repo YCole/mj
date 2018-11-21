@@ -490,7 +490,10 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
 
     @Override
     public void onContactsUpdated() {
-        if (!BeautyMirrorActivity.isInstanciated() || BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.CONTACTS_LIST)
+        if (!BeautyMirrorActivity.isInstanciated()
+                || (BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.HISTORY_LIST
+                && BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.CONTACTS_LIST
+                && BeautyMirrorActivity.instance().getCurrentFragment() != FragmentsAvailable.MINE))
             return;
         if (mContactAdapter != null) {
             mContactAdapter.updateDataSet(ContactsManager.getInstance().getSIPContacts());

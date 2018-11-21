@@ -597,6 +597,17 @@
     <string name="magic">美镜</string>
     <string name="phonelist">通讯录</string>
 
+    <string name="personal_information">个人信息</string>
+    <string name="edit_personal_information">编辑个人信息</string>
+    <string name="nick_name">名称</string>
+    <string name="edit_nick_name">编辑昵称</string>
+    <string name="beautymirror_account">美镜账号</string>
+    <string name="reset_password">修改密码</string>
+    <string name="logout">退出登录</string>
+    <string name="delete_photo">删除照片</string>
+    <string name="take_photo">拍摄新照片</string>
+    <string name="select_photo_from_gallery">从相册中选择照片</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="setting_contact_photo">"Setting avatar"</string>

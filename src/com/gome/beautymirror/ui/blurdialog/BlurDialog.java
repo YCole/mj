@@ -17,10 +17,12 @@ import com.gome.beautymirror.R;
 public class BlurDialog extends Dialog {
 
     protected BlurView mBlurView;
+    private boolean mIsBlur;
 
-    public BlurDialog(@NonNull Context context) {
+    public BlurDialog(@NonNull Context context,boolean isBlur) {
         super(context, R.style.MyDialog);
         init(context);
+        mIsBlur = isBlur;
     }
 
     public BlurDialog(@NonNull Context context, int themeResId) {
@@ -62,7 +64,7 @@ public class BlurDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(mBlurView != null) {
+        if(mBlurView != null && mIsBlur) {
             mBlurView.blur();
         }
     }

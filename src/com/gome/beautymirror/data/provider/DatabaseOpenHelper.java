@@ -47,9 +47,9 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             db.execSQL(DatabaseUtil.Calllog.CREATE_TRIGGER);
             db.execSQL(DatabaseUtil.Calllog.CREATE_VIEW);
 
-            db.execSQL(DatabaseUtil.Notification.CREATE);
-            db.execSQL(DatabaseUtil.Notification.CREATE_TRIGGER);
-            db.execSQL(DatabaseUtil.Notification.CREATE_VIEW);
+            db.execSQL(DatabaseUtil.Information.CREATE);
+            db.execSQL(DatabaseUtil.Information.CREATE_TRIGGER);
+            db.execSQL(DatabaseUtil.Information.CREATE_VIEW);
 
             db.execSQL(DatabaseUtil.File.CREATE);
         } catch(SQLiteException e) {

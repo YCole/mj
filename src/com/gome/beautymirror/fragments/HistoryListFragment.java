@@ -60,7 +60,7 @@ import com.gome.beautymirror.advertisement.PicassoImageLoader;
 
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.CallLog;
-import com.gome.beautymirror.data.Notification;
+import com.gome.beautymirror.data.Information;
 import com.gome.beautymirror.activities.ContactDetailsActivity;
 import com.gome.beautymirror.contacts.LinphoneContact;
 import android.content.BroadcastReceiver;
@@ -192,7 +192,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
             BeautyMirrorActivity.instance().displayMissedCalls(0);
         }
 
-        mLogs = getCalllogsAndNotifications();
+        mLogs = getCalllogsAndInformations();
         mLogs = deleteSameLogs();
 
         mHistoryAdapter = new CallHistoryAdapter(getActivity().getApplicationContext(), list_key, this, mSelectionHelper);//list_key
@@ -239,7 +239,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
 
     @Override
     public void onContactsUpdated() {
-        BeautyMirrorActivity.instance().refreshBagdeNumber(getMissedCallLogsAndNotifications());
+        BeautyMirrorActivity.instance().refreshBagdeNumber(getMissedCallLogsAndInformations());
         if (!BeautyMirrorActivity.isInstanciated() || BeautyMirrorActivity.instance().getCurrentFragment() != com.gome.beautymirror.fragments.FragmentsAvailable.HISTORY_LIST)
             return;
         CallHistoryAdapter adapter = (CallHistoryAdapter) historyList.getAdapter();
@@ -302,7 +302,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
                     if(mLogs.get(position) instanceof CallLog){
                         address = ((CallLog) mLogs.get(position)).mAccount;
                     }else {
-                        address = ((Notification) mLogs.get(position)).mAccount;
+                        address = ((Information) mLogs.get(position)).mAccount;
                     }
                     LinphoneUtils.setInitiateVideoCall(true);
                     BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null);
@@ -312,7 +312,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
                         LinphoneUtils.setInitiateVideoCall(true);
                         BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null);
                     }else {
-                        address = ((Notification) mLogs.get(position)).mAccount;
+                        address = ((Information) mLogs.get(position)).mAccount;
                         LinphoneContact contact = ContactsManager.getInstance().getContactFromAccount(address);
                         Bundle extras = new Bundle();
                         extras.putSerializable("Contact", contact);
@@ -341,17 +341,17 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         }
     }
 
-    private ArrayList<Object> getCalllogsAndNotifications(){
+    private ArrayList<Object> getCalllogsAndInformations(){
         ArrayList<Object> arrayList = null;
         if(DataService.isReady()){
-            arrayList = DataService.instance().getCalllogsAndNotifications();
+            arrayList = DataService.instance().getCalllogsAndInformations();
         }
         return arrayList;
     }
 
-    public int getMissedCallLogsAndNotifications(){
+    public int getMissedCallLogsAndInformations(){
         int count =0;
-        ArrayList<Object> mMissedLogs = getCalllogsAndNotifications();
+        ArrayList<Object> mMissedLogs = getCalllogsAndInformations();
         if(mMissedLogs!=null && mMissedLogs.size()>0){
             for(int i = 0; i < mMissedLogs.size(); i++){
                 if (mMissedLogs.get(i) instanceof CallLog) {
@@ -359,7 +359,7 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
                         count++;
                     }
                 }else{
-                    if(((Notification) mMissedLogs.get(i)).mRead == 0 ){
+                    if(((Information) mMissedLogs.get(i)).mRead == 0 ){
                         count++;
                     }
                 }
@@ -368,15 +368,15 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         return count;
     }
 
-    public void setReadedCallLogsAndNotifications(){
+    public void setReadedCallLogsAndInformations(){
         if(mLogs!=null && mLogs.size()>0){
             for(int i = 0; i < mLogs.size(); i++){
                 if (mLogs.get(i) instanceof CallLog) {
                     ((CallLog) mLogs.get(i)).mRead =1;
                     DataService.instance().readCalllog();
                 }else{
-                    ((Notification) mLogs.get(i)).mRead =1;
-                    DataService.instance().readNotification();
+                    ((Information) mLogs.get(i)).mRead =1;
+                    DataService.instance().readInformation();
                 }
             }
         }

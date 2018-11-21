@@ -49,9 +49,9 @@ public class DatabaseProvider extends ContentProvider {
     private static final int CALLLOGS = 15;
     private static final int CALLLOGS_ID = 16;
     private static final int CALLLOGS_VIEW = 17;
-    private static final int NOTIFICATIONS = 18;
-    private static final int NOTIFICATIONS_ID = 19;
-    private static final int NOTIFICATIONS_VIEW = 20;
+    private static final int INFORMATIONS = 18;
+    private static final int INFORMATIONS_ID = 19;
+    private static final int INFORMATIONS_VIEW = 20;
     private static final int FILES = 21;
     private static final int FILES_ID = 22;
 
@@ -75,9 +75,9 @@ public class DatabaseProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, DatabaseUtil.Tables.CALLLOGS, CALLLOGS);
         matcher.addURI(AUTHORITY, DatabaseUtil.Tables.CALLLOGS + "/*", CALLLOGS_ID);
         matcher.addURI(AUTHORITY, DatabaseUtil.Views.CALLLOGS, CALLLOGS_VIEW);
-        matcher.addURI(AUTHORITY, DatabaseUtil.Tables.NOTIFICATIONS, NOTIFICATIONS);
-        matcher.addURI(AUTHORITY, DatabaseUtil.Tables.NOTIFICATIONS + "/*", NOTIFICATIONS_ID);
-        matcher.addURI(AUTHORITY, DatabaseUtil.Views.NOTIFICATIONS, NOTIFICATIONS_VIEW);
+        matcher.addURI(AUTHORITY, DatabaseUtil.Tables.INFORMATIONS, INFORMATIONS);
+        matcher.addURI(AUTHORITY, DatabaseUtil.Tables.INFORMATIONS+ "/*", INFORMATIONS_ID);
+        matcher.addURI(AUTHORITY, DatabaseUtil.Views.INFORMATIONS, INFORMATIONS_VIEW);
         matcher.addURI(AUTHORITY, DatabaseUtil.Tables.FILES, FILES);
         matcher.addURI(AUTHORITY, DatabaseUtil.Tables.FILES + "/*", FILES_ID);
     }
@@ -92,8 +92,8 @@ public class DatabaseProvider extends ContentProvider {
     public static final Uri PROPOSERS_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Tables.PROPOSERS);
     public static final Uri CALLLOGS_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Tables.CALLLOGS);
     public static final Uri CALLLOGS_VIEW_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Views.CALLLOGS);
-    public static final Uri NOTIFICATIONS_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Tables.NOTIFICATIONS);
-    public static final Uri NOTIFICATIONS_VIEW_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Views.NOTIFICATIONS);
+    public static final Uri INFORMATIONS_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Tables.INFORMATIONS);
+    public static final Uri INFORMATIONS_VIEW_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Views.INFORMATIONS);
     public static final Uri FILES_URI = Uri.withAppendedPath(AUTHORITY_URI, DatabaseUtil.Tables.FILES);
 
     @Override
@@ -187,12 +187,12 @@ public class DatabaseProvider extends ContentProvider {
                 Log.d(TAG, "insert: CALLLOGS_ID is unsupported");
                 break;
 
-            case NOTIFICATIONS:
-                id = db.insert(DatabaseUtil.Tables.NOTIFICATIONS, null, values);
+            case INFORMATIONS:
+                id = db.insert(DatabaseUtil.Tables.INFORMATIONS, null, values);
                 break;
 
-            case NOTIFICATIONS_ID:
-                Log.d(TAG, "insert: NOTIFICATIONS_ID is unsupported");
+            case INFORMATIONS_ID:
+                Log.d(TAG, "insert: INFORMATIONS_ID is unsupported");
                 break;
 
             case FILES:
@@ -334,12 +334,12 @@ public class DatabaseProvider extends ContentProvider {
                 Log.d(TAG, "update: CALLLOGS_ID is unsupported");
                 break;
 
-            case NOTIFICATIONS:
-                count = db.update(DatabaseUtil.Tables.NOTIFICATIONS, values, selection, selectionArgs);
+            case INFORMATIONS:
+                count = db.update(DatabaseUtil.Tables.INFORMATIONS, values, selection, selectionArgs);
                 break;
 
-            case NOTIFICATIONS_ID:
-                Log.d(TAG, "update: NOTIFICATIONS_ID is unsupported");
+            case INFORMATIONS_ID:
+                Log.d(TAG, "update: INFORMATIONS_ID is unsupported");
                 break;
 
             case FILES:
@@ -486,12 +486,12 @@ public class DatabaseProvider extends ContentProvider {
                 Log.d(TAG, "delete: CALLLOGS_ID is unsupported");
                 break;
 
-            case NOTIFICATIONS:
-                count = db.delete(DatabaseUtil.Tables.NOTIFICATIONS, selection, selectionArgs);
+            case INFORMATIONS:
+                count = db.delete(DatabaseUtil.Tables.INFORMATIONS, selection, selectionArgs);
                 break;
 
-            case NOTIFICATIONS_ID:
-                Log.d(TAG, "delete: NOTIFICATIONS_ID is unsupported");
+            case INFORMATIONS_ID:
+                Log.d(TAG, "delete: INFORMATIONS_ID is unsupported");
                 break;
 
             case FILES:
@@ -674,17 +674,17 @@ public class DatabaseProvider extends ContentProvider {
                         projection, selection, selectionArgs, null, null, sortOrder);
                 break;
 
-            case NOTIFICATIONS:
-                cursor = db.query(DatabaseUtil.Tables.NOTIFICATIONS,
+            case INFORMATIONS:
+                cursor = db.query(DatabaseUtil.Tables.INFORMATIONS,
                         projection, selection, selectionArgs, null, null, sortOrder);
                 break;
 
-            case NOTIFICATIONS_ID:
-                Log.d(TAG, "query: NOTIFICATIONS_ID is unsupported");
+            case INFORMATIONS_ID:
+                Log.d(TAG, "query: INFORMATIONS_ID is unsupported");
                 break;
 
-            case NOTIFICATIONS_VIEW:
-                cursor = db.query(DatabaseUtil.Views.NOTIFICATIONS,
+            case INFORMATIONS_VIEW:
+                cursor = db.query(DatabaseUtil.Views.INFORMATIONS,
                         projection, selection, selectionArgs, null, null, sortOrder);
                 break;
 
@@ -736,8 +736,8 @@ public class DatabaseProvider extends ContentProvider {
             case PROPOSERS:
             case CALLLOGS:
             case CALLLOGS_VIEW:
-            case NOTIFICATIONS:
-            case NOTIFICATIONS_VIEW:
+            case INFORMATIONS:
+            case INFORMATIONS_VIEW:
             case FILES:
                 return "vnd.android.cursor.dir/multi";
 
@@ -748,7 +748,7 @@ public class DatabaseProvider extends ContentProvider {
             case PEOPLES_ID:
             case PROPOSERS_ID:
             case CALLLOGS_ID:
-            case NOTIFICATIONS_ID:
+            case INFORMATIONS_ID:
             case FILES_ID:
                 return "vnd.android.cursor.item/single";
 

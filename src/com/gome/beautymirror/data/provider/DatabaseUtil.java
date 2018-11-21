@@ -20,20 +20,20 @@ public final class DatabaseUtil {
         public static final String PEOPLES = "peoples";
         public static final String PROPOSERS = "proposers";
         public static final String CALLLOGS = "calllogs";
-        public static final String NOTIFICATIONS = "notifications";
+        public static final String INFORMATIONS = "informations";
         public static final String FILES = "files";
     }
 
     public interface Triggers {
         public static final String CALLLOGS = "trigger_calllogs";
-        public static final String NOTIFICATIONS = "trigger_notifications";
+        public static final String INFORMATIONS = "trigger_informations";
     }
 
     public interface Views {
         public static final String ACCOUNTS = "view_accounts";
         public static final String FRIENDS = "view_friends";
         public static final String CALLLOGS = "view_calllogs";
-        public static final String NOTIFICATIONS = "view_notifications";
+        public static final String INFORMATIONS = "view_informations";
     }
 
     public interface AccountColumns {
@@ -282,7 +282,7 @@ public final class DatabaseUtil {
     /* } */
 
     /* notifications table @{ */
-    public static final class Notification implements AccountColumns, DeviceColumns {
+    public static final class Information implements AccountColumns, DeviceColumns {
         private static final int MAX_COUNT = 100;
 
         public static final String TIME = "time";
@@ -298,23 +298,23 @@ public final class DatabaseUtil {
         public static final int READ_OLD = 1;
         public static final int READ_DEFAULT = READ_NEW;
 
-        public static final String CREATE = "CREATE TABLE IF NOT EXISTS " + Tables.NOTIFICATIONS + " ("
+        public static final String CREATE = "CREATE TABLE IF NOT EXISTS " + Tables.INFORMATIONS + " ("
                 + TIME + " LONG PRIMARY KEY, "
                 + ACCOUNT + " TEXT UNIQUE, "
                 + ID + " TEXT, "
                 + REQUEST + " INTEGER NOT NULL DEFAULT " + REQUEST_DEFAULT + ", "
                 + READ + " INTEGER NOT NULL DEFAULT " + READ_DEFAULT + ");";
 
-        public static final String CREATE_TRIGGER = "CREATE TRIGGER IF NOT EXISTS " + Triggers.NOTIFICATIONS
-                + " AFTER insert ON " + Tables.NOTIFICATIONS + " for each row "
+        public static final String CREATE_TRIGGER = "CREATE TRIGGER IF NOT EXISTS " + Triggers.INFORMATIONS
+                + " AFTER insert ON " + Tables.INFORMATIONS + " for each row "
                 + "BEGIN "
-                + "delete FROM " + Tables.NOTIFICATIONS
-                + " where (select count(*) FROM " + Tables.NOTIFICATIONS + ") > " + MAX_COUNT
-                + " and " + TIME + " in (select " + TIME + " from " + Tables.NOTIFICATIONS + " order by " + TIME + " asc limit 1);"
+                + "delete FROM " + Tables.INFORMATIONS
+                + " where (select count(*) FROM " + Tables.INFORMATIONS + ") > " + MAX_COUNT
+                + " and " + TIME + " in (select " + TIME + " from " + Tables.INFORMATIONS + " order by " + TIME + " asc limit 1);"
                 + " END;";
 
-        public static final String CREATE_VIEW = "CREATE VIEW IF NOT EXISTS " + Views.NOTIFICATIONS
-                + " AS SELECT n.*, f.name, f.icon, f.comment FROM " + Tables.NOTIFICATIONS + " n"
+        public static final String CREATE_VIEW = "CREATE VIEW IF NOT EXISTS " + Views.INFORMATIONS
+                + " AS SELECT n.*, f.name, f.icon, f.comment FROM " + Tables.INFORMATIONS+ " n"
                 + " LEFT OUTER JOIN " + Tables.FRIENDS + " f ON (n.account = f.account)";
 
         public static final int COLUMN_TIME = 0;

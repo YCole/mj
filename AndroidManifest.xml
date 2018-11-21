@@ -70,8 +70,12 @@
             android:theme="@style/NoTitle" />
         <activity
             android:name="cole.activities.RigisterAndLoginMainActivity"
-            android:theme="@style/myAppTheme"></activity>
-
+            android:launchMode="singleTask"
+            android:theme="@style/myAppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name="cole.activities.RegisterActivity"
@@ -98,6 +102,12 @@
             android:name="com.google.zxing.activity.CaptureActivity"
             android:theme="@style/Transparent" />
 
+        <activity
+            android:name="cole.activities.PersonalInformationActivity"
+            android:theme="@style/myAppTheme"/>
+        <activity
+            android:name="cole.activities.AboutActivity"
+            android:theme="@style/myAppTheme"/>
 
         <!--cole add end-->
 

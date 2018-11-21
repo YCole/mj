@@ -2,6 +2,10 @@ package com.gome.beautymirror.data;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -37,15 +41,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.data.CallLog;
 import com.gome.beautymirror.data.DataUtil;
 import com.gome.beautymirror.data.DataThread;
-import com.gome.beautymirror.data.Notification;
+import com.gome.beautymirror.data.Information;
 import com.gome.beautymirror.data.provider.DatabaseProvider;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 import com.gome.beautymirror.LinphoneManager;
 import com.gome.beautymirror.LinphonePreferences;
 import com.gome.beautymirror.LinphonePreferences.AccountBuilder;
+import com.gome.beautymirror.R;
 
 import cole.utils.SaveUtils;
 
@@ -75,13 +81,18 @@ public class DataService extends Service {
     private static final int MESSAGE_BROADCAST_FRIEND = 4;
     private static final int MESSAGE_BROADCAST_PEOPLE = 5;
     private static final int MESSAGE_BROADCAST_PROPOSER = 6;
-    private static final int MESSAGE_BROADCAST_NOTIFICATION = 7;
+    private static final int MESSAGE_BROADCAST_INFORMATION = 7;
 
     private static DataService instance;
 
     private DataServiceBinder mBinder = new DataServiceBinder();
-    private ContentResolver mContentResolver = null;
     private DataServiceHandler mHandler = new DataServiceHandler();
+    private TelephonyManager mTelephonyManager = null;
+    private NotificationManager mNotificationManager = null;
+    private ContentResolver mContentResolver = null;
+
+    private static final int NOTIF_ACCOUNT = 1;
+    private static final int NOTIF_INFORMATION = 2;
 
     public static boolean isReady() {
         return instance != null;
@@ -133,8 +144,8 @@ public class DataService extends Service {
                     result = true;
                     break;
 
-                case MESSAGE_BROADCAST_NOTIFICATION:
-                    sendBroadcast(new Intent(DataUtil.BROADCAST_NOTIFICATION));
+                case MESSAGE_BROADCAST_INFORMATION:
+                    sendBroadcast(new Intent(DataUtil.BROADCAST_INFORMATION));
                     result = true;
                     break;
 
@@ -150,6 +161,8 @@ public class DataService extends Service {
         Log.d(TAG, "[onCreate]");
         super.onCreate();
 
+        mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mContentResolver = getContentResolver();
         initialise(null);
     }
@@ -250,8 +263,7 @@ public class DataService extends Service {
            return false;
         }
 
-        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        final String info = DataUtil.getMD5(telephonyManager.getDeviceId());
+        final String info = DataUtil.getMD5(mTelephonyManager.getDeviceId());
         Handler h = new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
@@ -264,8 +276,7 @@ public class DataService extends Service {
                             } else {
                                 SaveUtils.writeUser(DataService.this, "account", account);
                             }
-                            boolean result = loginSip(null);
-                            result = sync();
+                            boolean result = initialise(null);
                         } else {
                             Log.d(TAG, "loginAccount: obj is " + obj);
                         }
@@ -348,7 +359,10 @@ public class DataService extends Service {
                             if (!info.equals(obj.getString("loginInfo"))) {
                                 Toast.makeText(DataService.this, "Account is abnormal.", Toast.LENGTH_LONG).show();
                                 int count = logoutAccount(account);
-                                if (count > 0) sendBroadcast(MESSAGE_BROADCAST_ACCOUNT);
+                                if (count > 0) {
+                                    sendBroadcast(MESSAGE_BROADCAST_ACCOUNT);
+                                    showNotification(NOTIF_ACCOUNT, "Warn", "Account is abnormal.", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                }
                             } else if (date.getTime() != time) {
                                 syncAccount(account);
                                 checkFriend();
@@ -479,7 +493,7 @@ public class DataService extends Service {
                 deletePeoples(null, null);
                 deleteProposers(null, null);
                 deleteCalllogs(null, null);
-                deleteNotifications(null, null);
+                deleteInformations(null, null);
                 deleteFiles(null, null);
             }
             return count;
@@ -838,7 +852,7 @@ public class DataService extends Service {
                                                         null,
                                                         0L,
                                                         id,
-                                                        null,
+                                                        data.optString("friendComment"),
                                                         data.getString("accountSip"));
                                                 uri = saveFriendDevice(id, null, obj.optString("deviceSip"));
                                             } else {
@@ -847,14 +861,17 @@ public class DataService extends Service {
                                                         null,
                                                         0L,
                                                         null,
-                                                        null,
+                                                        data.optString("friendComment"),
                                                         data.getString("accountSip"));
                                             }
                                             int count = updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
                                             if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                                             count = updatePeople(account, DatabaseUtil.People.STATUS_FRIEND);
-                                            count = updateNotification(account, DatabaseUtil.Notification.REQUEST_CONFIRMED);
-                                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                                            count = updateInformation(account, DatabaseUtil.Information.REQUEST_CONFIRMED);
+                                            if (count > 0) {
+                                                sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
+                                                showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                            }
                                             syncFriend(account);
                                         }
                                         sendBroadcast(MESSAGE_BROADCAST_FRIEND);
@@ -867,8 +884,8 @@ public class DataService extends Service {
                                     count = deleteProposer(account);
                                     if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                                     count = deleteCalllog(account);
-                                    count = deleteNotification(account);
-                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                                    count = deleteInformation(account);
+                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
                                 }
                             } else {
                                 Log.d(TAG, "checkFriend: obj is " + obj);
@@ -948,7 +965,41 @@ public class DataService extends Service {
         return mContentResolver.update(DatabaseProvider.FRIENDS_URI, values, DatabaseUtil.Friend.ACCOUNT + " = ?", new String[]{account});
     }
 
-    public int updateFriend(String account, String comment) {
+    public boolean updateFriend(String account, final String friendAccount, final String comment, final Handler handler, final int what) {
+        account = matchAccount(account);
+        if (TextUtils.isEmpty(account) || TextUtils.isEmpty(friendAccount)) {
+            return false;
+        }
+        Handler h = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    try {
+                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            int count = updateFriend(friendAccount, comment);
+                        } else {
+                            Log.d(TAG, "updateFriend: obj is " + obj);
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "updateFriend: JSONException is ", e);
+                    }
+                    if (handler != null) {
+                        handler.obtainMessage(what, obj).sendToTarget();
+                    } else {
+                        Log.d(TAG, "updateFriend: handler is null");
+                    }
+                }
+        };
+        final Map<String, String> params = new HashMap<String, String>();
+        params.put("number", account);
+        params.put("friendNumber", friendAccount);
+        params.put("friendComment", comment);
+        new DataThread(DataUtil.FRIEND_URL + "updateFriend", params,
+                h.obtainMessage(0)).start();
+        return true;
+    }
+
+    private int updateFriend(String account, String comment) {
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.Friend.COMMENT, comment);
         return mContentResolver.update(DatabaseProvider.FRIENDS_URI, values, DatabaseUtil.Friend.ACCOUNT + " = ?", new String[]{account});
@@ -972,8 +1023,8 @@ public class DataService extends Service {
                             count = deleteProposer(friendAccount);
                             if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
                             count = deleteCalllog(friendAccount);
-                            count = deleteNotification(friendAccount);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                            count = deleteInformation(friendAccount);
+                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
                         } else {
                             Log.d(TAG, "deleteFriend: obj is " + obj);
                         }
@@ -1309,9 +1360,9 @@ public class DataService extends Service {
                 public void handleMessage(Message msg) {
                     JSONObject obj = (JSONObject) msg.obj;
                     try {
-						if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            Uri uri = logNotification(number, DatabaseUtil.Notification.REQUEST_FRIEND);
-                            if (uri != null) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            Uri uri = logInformation(number, DatabaseUtil.Information.REQUEST_FRIEND);
+                            if (uri != null) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
                         } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
                             checkFriend();
                         } else {
@@ -1418,8 +1469,11 @@ public class DataService extends Service {
                             int count = updateProposer(friendAccount,
                                     request == REQUEST_CANCEL ? DatabaseUtil.Proposer.STATUS_IGNORE : DatabaseUtil.Proposer.STATUS_FRIEND);
                             if (request == REQUEST_OK) {
-                                Uri uri = logNotification(friendAccount, DatabaseUtil.Notification.REQUEST_CONFIRM);
-                                if (uri != null) sendBroadcast(MESSAGE_BROADCAST_NOTIFICATION);
+                                Uri uri = logInformation(friendAccount, DatabaseUtil.Information.REQUEST_CONFIRM);
+                                if (uri != null) {
+                                    sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
+                                    showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                }
                                 checkFriend();
                             } else {
                                 Log.d(TAG, "confirmProposer: cancel for " + friendAccount);
@@ -1463,66 +1517,66 @@ public class DataService extends Service {
         return deleteCalllogs(DatabaseUtil.Calllog.ACCOUNT + " = ?", new String[]{account});
     }
 
-    private Uri logNotification(String account, int request) {
+    private Uri logInformation(String account, int request) {
         ContentValues values = new ContentValues();
-        values.put(DatabaseUtil.Notification.TIME, System.currentTimeMillis()/1000);
-        values.put(DatabaseUtil.Notification.ACCOUNT, account);
-        values.put(DatabaseUtil.Notification.ID, "");
-        values.put(DatabaseUtil.Notification.REQUEST, request);
-        values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_NEW);
-        return mContentResolver.insert(DatabaseProvider.NOTIFICATIONS_URI, values);
+        values.put(DatabaseUtil.Information.TIME, System.currentTimeMillis()/1000);
+        values.put(DatabaseUtil.Information.ACCOUNT, account);
+        values.put(DatabaseUtil.Information.ID, "");
+        values.put(DatabaseUtil.Information.REQUEST, request);
+        values.put(DatabaseUtil.Information.READ, DatabaseUtil.Information.READ_NEW);
+        return mContentResolver.insert(DatabaseProvider.INFORMATIONS_URI, values);
     }
 
-    private Cursor getNotifications(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        return mContentResolver.query(DatabaseProvider.NOTIFICATIONS_VIEW_URI, projection, selection, selectionArgs, sortOrder);
+    private Cursor getInformations(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return mContentResolver.query(DatabaseProvider.INFORMATIONS_VIEW_URI, projection, selection, selectionArgs, sortOrder);
     }
 
-    private int updateNotification(String account, int request) {
+    private int updateInformation(String account, int request) {
         ContentValues values = new ContentValues();
-        values.put(DatabaseUtil.Notification.REQUEST, request);
-        values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_NEW);
-        return mContentResolver.update(DatabaseProvider.NOTIFICATIONS_URI, values, DatabaseUtil.Notification.ACCOUNT + " = ?", new String[]{account});
+        values.put(DatabaseUtil.Information.REQUEST, request);
+        values.put(DatabaseUtil.Information.READ, DatabaseUtil.Information.READ_NEW);
+        return mContentResolver.update(DatabaseProvider.INFORMATIONS_URI, values, DatabaseUtil.Information.ACCOUNT + " = ?", new String[]{account});
     }
 
-    public int readNotification() {
+    public int readInformation() {
         ContentValues values = new ContentValues();
-        values.put(DatabaseUtil.Notification.READ, DatabaseUtil.Notification.READ_OLD);
-        return mContentResolver.update(DatabaseProvider.NOTIFICATIONS_URI, values, DatabaseUtil.Notification.READ + " = ?", new String[]{DatabaseUtil.Notification.READ_NEW + ""});
+        values.put(DatabaseUtil.Information.READ, DatabaseUtil.Information.READ_OLD);
+        return mContentResolver.update(DatabaseProvider.INFORMATIONS_URI, values, DatabaseUtil.Information.READ + " = ?", new String[]{DatabaseUtil.Information.READ_NEW + ""});
     }
 
-    private int deleteNotifications(String selection, String[] selectionArgs) {
-        return mContentResolver.delete(DatabaseProvider.NOTIFICATIONS_URI, selection, selectionArgs);
+    private int deleteInformations(String selection, String[] selectionArgs) {
+        return mContentResolver.delete(DatabaseProvider.INFORMATIONS_URI, selection, selectionArgs);
     }
 
-    private int deleteNotification(String account) {
-        return deleteNotifications(DatabaseUtil.Notification.ACCOUNT + " = ?", new String[]{account});
+    private int deleteInformation(String account) {
+        return deleteInformations(DatabaseUtil.Information.ACCOUNT + " = ?", new String[]{account});
     }
 
-    public ArrayList<Object> getCalllogsAndNotifications() {
+    public ArrayList<Object> getCalllogsAndInformations() {
         Cursor cursorCalllogs = getCalllogs(null, null, null, DatabaseUtil.Calllog.TIME + " desc");
-        Cursor cursorNotifications = getNotifications(null,
-                DatabaseUtil.Notification.REQUEST + " != " + DatabaseUtil.Notification.REQUEST_FRIEND,
+        Cursor cursorInformations = getInformations(null,
+                DatabaseUtil.Information.REQUEST + " != " + DatabaseUtil.Information.REQUEST_FRIEND,
                 null,
-                DatabaseUtil.Notification.TIME + " desc");
+                DatabaseUtil.Information.TIME + " desc");
 
         ArrayList<Object> arrayList = new ArrayList<Object>();
 
         if (cursorCalllogs == null || !cursorCalllogs.moveToFirst()) {
-            if (cursorNotifications != null && cursorNotifications.moveToFirst()) {
+            if (cursorInformations != null && cursorInformations.moveToFirst()) {
                 do {
-                    arrayList.add(new Notification(cursorNotifications.getLong(DatabaseUtil.Notification.COLUMN_TIME),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ID),
-                            cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_REQUEST),
-                            cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_READ),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_NAME),
-                            DataUtil.getImage(cursorNotifications.getBlob(DatabaseUtil.Notification.COLUMN_ACCOUNT_ICON)),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_COMMENT)));
-                } while (cursorNotifications.moveToNext());
+                    arrayList.add(new Information(cursorInformations.getLong(DatabaseUtil.Information.COLUMN_TIME),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ID),
+                            cursorInformations.getInt(DatabaseUtil.Information.COLUMN_REQUEST),
+                            cursorInformations.getInt(DatabaseUtil.Information.COLUMN_READ),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_NAME),
+                            DataUtil.getImage(cursorInformations.getBlob(DatabaseUtil.Information.COLUMN_ACCOUNT_ICON)),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_COMMENT)));
+                } while (cursorInformations.moveToNext());
             } else {
                 Log.d(TAG, "getCalllogsAndNotifications: calllogs is null.");
             }
-        } else if (cursorNotifications == null || !cursorNotifications.moveToFirst()) {
+        } else if (cursorInformations == null || !cursorInformations.moveToFirst()) {
             if (cursorCalllogs != null && cursorCalllogs.moveToFirst()) {
                 do {
                     arrayList.add(new CallLog(cursorCalllogs.getLong(DatabaseUtil.Calllog.COLUMN_TIME),
@@ -1540,18 +1594,18 @@ public class DataService extends Service {
                 Log.d(TAG, "getCalllogsAndNotifications: notifications is null.");
             }
         } else {
-            while (!cursorCalllogs.isAfterLast() || !cursorNotifications.isAfterLast()) {
+            while (!cursorCalllogs.isAfterLast() || !cursorInformations.isAfterLast()) {
                 if (cursorCalllogs.isAfterLast()) {
-                    arrayList.add(new Notification(cursorNotifications.getLong(DatabaseUtil.Notification.COLUMN_TIME),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ID),
-                            cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_REQUEST),
-                            cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_READ),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_NAME),
-                            DataUtil.getImage(cursorNotifications.getBlob(DatabaseUtil.Notification.COLUMN_ACCOUNT_ICON)),
-                            cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_COMMENT)));
-                    cursorNotifications.moveToNext();
-                } else if (cursorNotifications.isAfterLast()) {
+                    arrayList.add(new Information(cursorInformations.getLong(DatabaseUtil.Information.COLUMN_TIME),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ID),
+                            cursorInformations.getInt(DatabaseUtil.Information.COLUMN_REQUEST),
+                            cursorInformations.getInt(DatabaseUtil.Information.COLUMN_READ),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_NAME),
+                            DataUtil.getImage(cursorInformations.getBlob(DatabaseUtil.Information.COLUMN_ACCOUNT_ICON)),
+                            cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_COMMENT)));
+                    cursorInformations.moveToNext();
+                } else if (cursorInformations.isAfterLast()) {
                     arrayList.add(new CallLog(cursorCalllogs.getLong(DatabaseUtil.Calllog.COLUMN_TIME),
                             cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ACCOUNT),
                             cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ID),
@@ -1565,7 +1619,7 @@ public class DataService extends Service {
                     cursorCalllogs.moveToNext();
                 } else {
                     Long timeCalllog = cursorCalllogs.getLong(DatabaseUtil.Calllog.COLUMN_TIME);
-                    Long timeNotification = cursorNotifications.getLong(DatabaseUtil.Notification.COLUMN_TIME);
+                    Long timeNotification = cursorInformations.getLong(DatabaseUtil.Information.COLUMN_TIME);
                     if (timeCalllog > timeNotification) {
                         arrayList.add(new CallLog(timeCalllog,
                                 cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ACCOUNT),
@@ -1579,15 +1633,15 @@ public class DataService extends Service {
                                 cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ACCOUNT_COMMENT)));
                         cursorCalllogs.moveToNext();
                     } else if (timeCalllog < timeNotification) {
-                        arrayList.add(new Notification(timeNotification,
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ID),
-                                cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_REQUEST),
-                                cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_READ),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_NAME),
-                                DataUtil.getImage(cursorNotifications.getBlob(DatabaseUtil.Notification.COLUMN_ACCOUNT_ICON)),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_COMMENT)));
-                        cursorNotifications.moveToNext();
+                        arrayList.add(new Information(timeNotification,
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ID),
+                                cursorInformations.getInt(DatabaseUtil.Information.COLUMN_REQUEST),
+                                cursorInformations.getInt(DatabaseUtil.Information.COLUMN_READ),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_NAME),
+                                DataUtil.getImage(cursorInformations.getBlob(DatabaseUtil.Information.COLUMN_ACCOUNT_ICON)),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_COMMENT)));
+                        cursorInformations.moveToNext();
                     } else {
                         arrayList.add(new CallLog(timeCalllog,
                                 cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ACCOUNT),
@@ -1600,22 +1654,22 @@ public class DataService extends Service {
                                 DataUtil.getImage(cursorCalllogs.getBlob(DatabaseUtil.Calllog.COLUMN_ACCOUNT_ICON)),
                                 cursorCalllogs.getString(DatabaseUtil.Calllog.COLUMN_ACCOUNT_COMMENT)));
                         cursorCalllogs.moveToNext();
-                        arrayList.add(new Notification(timeNotification,
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ID),
-                                cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_REQUEST),
-                                cursorNotifications.getInt(DatabaseUtil.Notification.COLUMN_READ),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_NAME),
-                                DataUtil.getImage(cursorNotifications.getBlob(DatabaseUtil.Notification.COLUMN_ACCOUNT_ICON)),
-                                cursorNotifications.getString(DatabaseUtil.Notification.COLUMN_ACCOUNT_NAME)));
-                        cursorNotifications.moveToNext();
+                        arrayList.add(new Information(timeNotification,
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ID),
+                                cursorInformations.getInt(DatabaseUtil.Information.COLUMN_REQUEST),
+                                cursorInformations.getInt(DatabaseUtil.Information.COLUMN_READ),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_NAME),
+                                DataUtil.getImage(cursorInformations.getBlob(DatabaseUtil.Information.COLUMN_ACCOUNT_ICON)),
+                                cursorInformations.getString(DatabaseUtil.Information.COLUMN_ACCOUNT_NAME)));
+                        cursorInformations.moveToNext();
                     }
                 }
             }
         }
 
         if (cursorCalllogs != null) cursorCalllogs.close();
-        if (cursorNotifications != null) cursorNotifications.close();
+        if (cursorInformations != null) cursorInformations.close();
 
         return arrayList;
     }
@@ -1743,6 +1797,29 @@ public class DataService extends Service {
         } else {
             return false;
         }
+    }
+
+    private void showNotification(int id, String title, String text, Intent intent) {
+        Notification.Builder builder = new Notification.Builder(this);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(contentIntent)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setSmallIcon(R.mipmap.ic_launcher);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(title, text, NotificationManager.IMPORTANCE_DEFAULT);
+            builder.setChannelId(title);
+            mNotificationManager.createNotificationChannel(channel);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .setCategory(Notification.CATEGORY_MESSAGE)
+                    .setFullScreenIntent(contentIntent, true);
+        }
+        Notification notify = builder.build();
+        mNotificationManager.notify(id, notify);
     }
 
     public static boolean checkResult(Message msg) {

@@ -191,7 +191,7 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
         final TextView sure =view.findViewById(R.id.sure);
         final TextView message =view.findViewById(R.id.message);
         message.setText(String.format(getResources().getString(R.string.delete_friend_message),name));
-        new BlurDialog(this){
+        new BlurDialog(this,true){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
@@ -226,11 +226,13 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
 
     private void showRemakeNameDialog() {
         final View view= LayoutInflater.from(this).inflate(R.layout.dialog_edittext_layout, null);
+        TextView title =view.findViewById(R.id.dialog_title);
+        title.setText(R.string.edit_remark_name);
         final TextView cancel =view.findViewById(R.id.choosepage_cancel);
         final TextView sure =view.findViewById(R.id.choosepage_sure);
         final EditText edittext =view.findViewById(R.id.choosepage_edittext);
         edittext.setText(contact.getRemarkName());
-         new BlurDialog(this){
+         new BlurDialog(this,true){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
@@ -244,11 +246,19 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
                 sure.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        String remakename=edittext.getText().toString();
-                        DataService.instance().updateFriend(mTvAccount.getText().toString().trim(),remakename);
-                        contact.setRemarkName(remakename);
-                        refreshView();
-                        dismiss();
+                        final String remakename=edittext.getText().toString();
+                        DataService.instance().updateFriend(null,mTvAccount.getText().toString().trim(),remakename,new Handler() {
+                            @Override
+                            public void handleMessage(Message msg) {
+                                if (DataService.checkResult(msg)) {
+                                    contact.setRemarkName(remakename);
+                                    refreshView();
+                                    dismiss();
+                                } else {
+                                    Toast.makeText(ContactDetailsActivity.this, "Fail", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }, 0);
                     }
                 });
             }

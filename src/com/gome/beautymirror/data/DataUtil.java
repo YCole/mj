@@ -26,7 +26,7 @@ public class DataUtil {
     public static final String BROADCAST_FRIEND = "BROADCAST_FRIEND";
     public static final String BROADCAST_PEOPLE = "BROADCAST_PEOPLE";
     public static final String BROADCAST_PROPOSER = "BROADCAST_PROPOSER";
-    public static final String BROADCAST_NOTIFICATION = "BROADCAST_NOTIFICATION";
+    public static final String BROADCAST_INFORMATION = "BROADCAST_INFORMATION";
 
     public static String getMD5(String str) {
         try {

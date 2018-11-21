@@ -6,12 +6,12 @@
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/dialog_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="14dp"
-        android:text="@string/edit_remark_name"
         style="@style/dialog_title_font"
         />
 

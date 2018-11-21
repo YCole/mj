@@ -12,6 +12,7 @@
         android:background="#efefef" />
 
     <LinearLayout
+        android:layout_marginLeft="17dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -20,7 +21,6 @@
         <ImageView
             android:id="@+id/iv_left_icon"
             android:layout_gravity="center_vertical"
-            android:layout_marginLeft="17dp"
             android:layout_marginRight="10dp"
             android:layout_width="24dp"
             android:layout_height="24dp" />
@@ -80,7 +80,8 @@
                     android:id="@+id/tv_right_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp" />
+                    android:layout_marginRight="8dp"
+                    style="@style/right_text_font"/>
 
                 <!--item右边的Icon 默认是向右的箭头-->
                 <ImageView

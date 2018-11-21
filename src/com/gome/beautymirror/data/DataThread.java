@@ -105,7 +105,7 @@ public class DataThread extends Thread {
                 Log.d(TAG, "run: mParams is null");
             }
 
-            if (mBitmap != null) {
+            if (!TextUtils.isEmpty(mAccount)) {
                 sb = null;
                 params = null;
                 sb = new StringBuffer();
@@ -117,20 +117,23 @@ public class DataThread extends Thread {
                 sb = null;
                 Log.i(TAG, "run: "+ mAccount + " = " + params + "##");
                 dos.write(params.getBytes());
-
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                mBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-                InputStream is = new ByteArrayInputStream(baos.toByteArray());
-                byte[] bytes = new byte[BYTE_SIZE];
-                int len = 0;
-                while ((len = is.read(bytes)) != -1) {
-                    dos.write(bytes, 0, len);
+                if (mBitmap != null) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    mBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                    InputStream is = new ByteArrayInputStream(baos.toByteArray());
+                    byte[] bytes = new byte[BYTE_SIZE];
+                    int len = 0;
+                    while ((len = is.read(bytes)) != -1) {
+                        dos.write(bytes, 0, len);
+                    }
+                    is.close();
+                    baos.close();
+                } else {
+                    Log.d(TAG, "run: mBitmap is null");
                 }
-                is.close();
-                baos.close();
                 dos.write(LINE_END.getBytes());
             } else {
-                Log.d(TAG, "run: mBitmap is null");
+                Log.d(TAG, "run: icon is null");
             }
 
             dos.write((PREFIX + BOUNDARY + PREFIX + LINE_END).getBytes());

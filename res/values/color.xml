@@ -269,4 +269,6 @@
     <color name="call_out_color">#FF35DA90</color>
     <color name="call_in_color">#FF61CAE0</color>
     <color name="call_miss_color">#FFFF7780</color>
+    <color name="small_avatar_inside_color">#FFD7DDFF</color>
+    <color name="right_text_color">#4D000000</color>
 </resources>

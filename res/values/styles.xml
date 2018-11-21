@@ -304,6 +304,11 @@
         <item name="android:textSize">12sp</item>
     </style>
 
+    <style name="right_text_font">
+        <item name="android:textColor">@color/right_text_color</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
     <style name="MyDialog" parent="android:style/Theme.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

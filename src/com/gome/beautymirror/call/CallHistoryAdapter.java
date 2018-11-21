@@ -41,36 +41,36 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.gome.beautymirror.data.CallLog;
-import com.gome.beautymirror.data.Notification;
+import com.gome.beautymirror.data.Information;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 import com.gome.beautymirror.ui.RoundImageView;
 
 public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.ViewHolder> implements SlidingButtonView.IonSlidingButtonListener {
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
             View.OnLongClickListener {
-        public TextView mCallName,mNotiticationName;
+        public TextView mCallName,mInformationName;
         public ImageView callDirection;
         public RoundImageView contactPicture;
         public ImageView vedioCall;
-        public TextView callDate, notificationData;
+        public TextView callDate, informationData;
         private CallHistoryAdapter.ViewHolder.ClickListener mListener;
-        private TextView content,mNotificationTitle;
-        private LinearLayout mLlCallLog,mLlNotification,historyClickLayout;
+        private TextView content,mInformationTitle;
+        private LinearLayout mLlCallLog,mLlInformation,historyClickLayout;
 
         public ViewHolder(View view, CallHistoryAdapter.ViewHolder.ClickListener listener) {
             super(view);
             mCallName = view.findViewById(R.id.call_name);
-            mNotiticationName = view.findViewById(R.id.notification_name);
+            mInformationName = view.findViewById(R.id.notification_name);
             callDirection = view.findViewById(R.id.icon);
             contactPicture = view.findViewById(R.id.contact_picture);
             callDate = view.findViewById(R.id.call_date);
-            notificationData = view.findViewById(R.id.notification_date);
+            informationData = view.findViewById(R.id.notification_date);
             content = view.findViewById(R.id.content);
-            mNotificationTitle = view.findViewById(R.id.notification_title);
+            mInformationTitle = view.findViewById(R.id.notification_title);
             vedioCall = view.findViewById(R.id.vedio_call);
             historyClickLayout = view.findViewById(R.id.history_click);
             mLlCallLog = view.findViewById(R.id.ll_call_log);
-            mLlNotification = view.findViewById(R.id.ll_notification);
+            mLlInformation = view.findViewById(R.id.ll_notification);
             mListener = listener;
             vedioCall.setOnClickListener(this);
             historyClickLayout.setOnClickListener(this);
@@ -137,7 +137,7 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
     public void onBindViewHolder(@NonNull final ViewHolder holder,  int position) {
         Map.Entry element = (Map.Entry) mList_key.get(position);
         if(element.getKey() instanceof CallLog){
-            holder.mLlNotification.setVisibility(View.GONE);
+            holder.mLlInformation.setVisibility(View.GONE);
             final CallLog log = (CallLog)element.getKey();
             if(log.mStatus == DatabaseUtil.Calllog.STATUS_MISSED){
                 holder.callDirection.setImageResource(R.drawable.bg_ciricle_call_miss);
@@ -166,15 +166,15 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
                 holder.mCallName.setText(holder.mCallName.getText()+"（ "+strValue+" ）");
             }
 
-        }else if(element.getKey() instanceof Notification){
+        }else if(element.getKey() instanceof Information){
             holder.mLlCallLog.setVisibility(View.GONE);
-            final Notification mNotification = (Notification)element.getKey();
-            if(mNotification.mIcon != null){
-                holder.contactPicture.setImageBitmap(mNotification.mIcon);
+            final Information mInformation = (Information)element.getKey();
+            if(mInformation.mIcon != null){
+                holder.contactPicture.setImageBitmap(mInformation.mIcon);
             }
-            holder.mNotiticationName.setText(mNotification.mName+"hghghhgh");
-            holder.mNotificationTitle.setText(mContext.getString(R.string.nofiticafion_title));
-            holder.notificationData.setText(updateRelativeTime(mNotification.mTime));
+            holder.mInformationName.setText(mInformation.mName+"hghghhgh");
+            holder.mInformationTitle.setText(mContext.getString(R.string.nofiticafion_title));
+            holder.informationData.setText(updateRelativeTime(mInformation.mTime));
         }
 
         holder.mCallName.setSelected(true); // For automated horizontal scrolling of long texts

@@ -49,39 +49,6 @@ public class JBDrmImpl
             info.put(MediaDetails.INDEX_DRM_FL_EXECUTE, unlimit);
             info.put(MediaDetails.INDEX_DRM_FL_PRINT, unlimit);
         }
-        // Release
-        Method releaseMethod = null;
-        try
-        {
-            releaseMethod = DrmManagerClient.class.getMethod("release", null);
-            if (releaseMethod != null)
-            {
-                releaseMethod.setAccessible(true);
-
-                releaseMethod.invoke(drmClient, null);
-
-            }
-        }
-        catch (NoSuchMethodException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (IllegalArgumentException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (IllegalAccessException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (InvocationTargetException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
 
         return info;
     }

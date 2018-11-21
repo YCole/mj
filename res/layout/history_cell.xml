@@ -14,7 +14,7 @@
         android:layout_height="42dp"
         android:layout_marginLeft="20dp"
         imagecontrol:border_width="3px"
-        imagecontrol:border_inside_color="#FFD7DDFF" />
+        imagecontrol:border_inside_color="@color/small_avatar_inside_color" />
 
     <LinearLayout
         android:layout_width="match_parent"

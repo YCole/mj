@@ -13,6 +13,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import com.gome.beautymirror.contacts.ContactsManager;
 
 import android.util.AttributeSet;
 
@@ -72,7 +73,13 @@ public class RoundImageView extends ImageView {
             if (drawable.getClass() == NinePatchDrawable.class)
                 return;
             Bitmap b = ((BitmapDrawable) drawable).getBitmap();
-            Bitmap bitmap = b.copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap bitmap;
+            if(b!=null){
+                bitmap = b.copy(Bitmap.Config.ARGB_8888, true);
+            }else{
+                bitmap = ContactsManager.getInstance().getDefaultAvatarBitmap();
+            }
+
             if (defaultWidth == 0) {
                 defaultWidth = getWidth();
             }

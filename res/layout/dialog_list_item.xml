@@ -1,0 +1,20 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="25dp"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/txtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/contact_name_font"
+        android:gravity="center"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/divider_line_color"
+        />
+</LinearLayout>

@@ -177,13 +177,13 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
 
 
     private RadioGroup mRadionGroupMain;
-    private BadgeRadioButton mHome, mContacts, mNotification, mDialer,mMine;
+    private BadgeRadioButton mHome, mContacts, mInformation, mDialer,mMine;
     private LinearLayout ll_ff;
     private ViewPager viewPager;
     private MyPagerAdapter adapter;
 
     public static final int FRAGMENGT_PHOTO = 0;
-    public static final int FRAGMENGT_NOFITICATION = 1;
+    public static final int FRAGMENGT_INFORMATION = 1;
     public static final int FRAGMENGT_CONTACT = 2;
     public static final int FRAGMENGT_MINE = 3;
     public static final int FRAGMENGT_DIALER = 4;
@@ -248,8 +248,6 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             if (LinphoneService.isReady())
                 ContactsManager.getInstance().initializeContactManager(this);
         }
-
-        startRigisterAndLogin();
 
         setContentView(R.layout.main);
         instance = this;
@@ -349,7 +347,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         if (extras != null && extras.getBoolean("GoToChat", false)) {
             onNewIntent(getIntent());
         }
-        mMissedCount = mHistoryListFragment.getMissedCallLogsAndNotifications();
+        mMissedCount = mHistoryListFragment.getMissedCallLogsAndInformations();
         refreshBagdeNumber(mMissedCount);
 
         if(LinphonePreferences.instance().isFirstLaunch()){
@@ -360,7 +358,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     }
 
     public void refreshBagdeNumber(int count){
-        mNotification.setBadgeNumber(count);
+        mInformation.setBadgeNumber(count);
     }
 
     private void initTabClick() {
@@ -373,7 +371,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                 } else if (id == R.id.tab_main_contacts) {
                     viewPager.setCurrentItem(FRAGMENGT_CONTACT);
                 } else if (id == R.id.tab_main_notification) {
-                    viewPager.setCurrentItem(FRAGMENGT_NOFITICATION);
+                    viewPager.setCurrentItem(FRAGMENGT_INFORMATION);
                     LinphoneManager.getLc().resetMissedCallsCount();
                     displayMissedCalls(0);
                 } else if (id == R.id.tab_main_mine) {
@@ -1032,6 +1030,9 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     @Override
     protected void onStart() {
         super.onStart();
+
+        startRigisterAndLogin();
+
         ArrayList<String> permissionsList = new ArrayList<String>();
 
         int contacts = getPackageManager().checkPermission(Manifest.permission.READ_CONTACTS, getPackageName());
@@ -1077,7 +1078,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         filter.addAction(DataUtil.BROADCAST_FRIEND);
         filter.addAction(DataUtil.BROADCAST_PEOPLE);
         filter.addAction(DataUtil.BROADCAST_PROPOSER);
-        filter.addAction(DataUtil.BROADCAST_NOTIFICATION);
+        filter.addAction(DataUtil.BROADCAST_INFORMATION);
         registerReceiver(mBroadcastReceiver, filter);
 
         if (DataService.isReady()) {
@@ -1222,6 +1223,9 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+
+        startRigisterAndLogin();
+
         if (getCurrentFragment() == FragmentsAvailable.SETTINGS) {
             if (fragment instanceof SettingsFragment) {
                 ((SettingsFragment) fragment).closePreferenceScreen();
@@ -1234,7 +1238,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             displayChat(sipUri, null, null);
         } else if (extras != null && extras.getBoolean("GoToHistory", false)) {
             doNotGoToCallActivity = true;
-            viewPager.setCurrentItem(FRAGMENGT_NOFITICATION);
+            viewPager.setCurrentItem(FRAGMENGT_INFORMATION);
         } else if (extras != null && extras.getBoolean("GoToInapp", false)) {
             doNotGoToCallActivity = true;
             displayInapp();
@@ -1597,8 +1601,8 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                         case FRAGMENGT_PHOTO:
                             mHome.setChecked(true);
                             break;
-                        case FRAGMENGT_NOFITICATION:
-                            mNotification.setChecked(true);
+                        case FRAGMENGT_INFORMATION:
+                            mInformation.setChecked(true);
                             break;
                         case FRAGMENGT_CONTACT:
                             mContacts.setChecked(true);
@@ -1607,11 +1611,11 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                             mMine.setChecked(true);
                             break;
                     }
-                    if(viewPager.getCurrentItem() == FRAGMENGT_NOFITICATION ){
-                        mHistoryListFragment.setReadedCallLogsAndNotifications();
-                        mNotification.setBadgeNumber(0);
+                    if(viewPager.getCurrentItem() == FRAGMENGT_INFORMATION ){
+                        mHistoryListFragment.setReadedCallLogsAndInformations();
+                        mInformation.setBadgeNumber(0);
                     }else {
-                        mMissedCount = mHistoryListFragment.getMissedCallLogsAndNotifications();
+                        mMissedCount = mHistoryListFragment.getMissedCallLogsAndInformations();
                         refreshBagdeNumber(mMissedCount);
                     }
 
@@ -1640,7 +1644,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                     fragment = mPhotoFragment;
                     currentFragment = FragmentsAvailable.PHOTO;
                     break;
-                case FRAGMENGT_NOFITICATION:
+                case FRAGMENGT_INFORMATION:
                     fragment = mHistoryListFragment;
                     currentFragment = FragmentsAvailable.HISTORY_LIST;
                     break;
@@ -1706,7 +1710,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
 
         mHome.setCompoundDrawables(null, drawable, null, null);
         mContacts.setCompoundDrawables(null, drawable2, null, null);
-        mNotification.setCompoundDrawables(null, drawable1, null, null);
+        mInformation.setCompoundDrawables(null, drawable1, null, null);
         mMine.setCompoundDrawables(null, drawable3, null, null);
 
     }
@@ -1715,7 +1719,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         mRadionGroupMain = (RadioGroup) findViewById(R.id.rg_home_radiogroup);
         mHome = (BadgeRadioButton) findViewById(R.id.tab_main_home);
         mContacts = (BadgeRadioButton) findViewById(R.id.tab_main_contacts);
-        mNotification = (BadgeRadioButton) findViewById(R.id.tab_main_notification);
+        mInformation = (BadgeRadioButton) findViewById(R.id.tab_main_notification);
         mDialer = (BadgeRadioButton) findViewById(R.id.tab_main_dialer);
         mMine = (BadgeRadioButton) findViewById(R.id.tab_main_mine);
 
@@ -1747,8 +1751,8 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                 android.util.Log.d("xw", "xiongwei1 BROADCAST_PEOPLE");
             } else if(DataUtil.BROADCAST_PROPOSER.equals(action)) {
                 mContactsListFragment.refreshData();
-            } else if(DataUtil.BROADCAST_NOTIFICATION.equals(action)) {
-                android.util.Log.d("xw", "xiongwei1 BROADCAST_NOTIFICATION");
+            } else if(DataUtil.BROADCAST_INFORMATION.equals(action)) {
+                android.util.Log.d("xw", "xiongwei1 BROADCAST_INFORMATION");
             } else {
                 android.util.Log.d("BeautyMirrorActivity", "[mBroadcastReceiver]onReceive: action = " + action);
             }
