@@ -31,6 +31,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,6 +64,7 @@ import android.view.SurfaceView;
 import java.io.IOException;
 
 import android.database.Cursor;
+import com.gome.beautymirror.data.DataUtil;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 
@@ -70,11 +72,12 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
     private static CallOutgoingActivity instance;
 
     private TextView name, number;
-    private ImageView micro, speaker, hangUp,contactPicture;
+    private ImageView micro, speaker,contactPicture;
     private Call mCall;
     private CoreListenerStub mListener;
     private boolean isMicMuted, isSpeakerEnabled;
-    private RelativeLayout topLayout;
+    private RelativeLayout topLayout,mRlContactDetail;
+    private FrameLayout hangUp;
     //videoCaptureSurface
     private Camera mCamera;
     private SurfaceHolder mHolder;
@@ -100,6 +103,9 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.call_outgoing);
 
+        mRlContactDetail = findViewById(R.id.contact_detail);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mRlContactDetail.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
         name = findViewById(R.id.contact_name);
         number = findViewById(R.id.contact_number);
         topLayout= findViewById(R.id.topLayout);
@@ -217,12 +223,15 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
 
         Address address = mCall.getRemoteAddress();
         LinphoneContact contact = ContactsManager.getInstance().findContactFromAddress(address);
+        byte[] icon = null;
         if (contact != null) {
             LinphoneUtils.setBgPictureFromUri(this, topLayout, contact.getPhotoUri(), contact.getThumbnailUri());
-            LinphoneUtils.setImagePictureFromUri(this, contactPicture, contact.getPhotoUri(), contact.getThumbnailUri());
+            icon = contact.getIcon();
+            if (icon != null) {
+                contactPicture.setImageBitmap(DataUtil.getImage(icon));
+            }
             name.setText(contact.getFullName());
         } else {
-            name.setText(LinphoneUtils.getAddressDisplayName(address));
             String sip = LinphoneUtils.getAddressDisplayName(address);
             if (sip != null && !"".equals(sip)) {
                 Cursor cursor = DataService.instance().getFriendForSip(sip);
@@ -234,6 +243,10 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
                         device = cursor.getString(DatabaseUtil.Friend.COLUMN_ID);
                     }
                     name.setText(account + " " + device);
+                    icon = cursor.getBlob(DatabaseUtil.Friend.COLUMN_ICON);
+                    if (icon != null) {
+                        contactPicture.setImageBitmap(DataUtil.getImage(icon));
+                    }
                     LinphoneManager.getLc().setCallLogsFriend(account, device);
                 } else {
                     if (cursor != null) cursor.close();
@@ -243,11 +256,20 @@ public class CallOutgoingActivity extends BeautyMirrorGenericActivity implements
                         if (sip.equals(cursor.getString(DatabaseUtil.Account.COLUMN_DEVICE_SIP))) {
                             device = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
                         }
+                        icon = cursor.getBlob(DatabaseUtil.Account.COLUMN_ICON);
+                        if (icon != null) {
+                            contactPicture.setImageBitmap(DataUtil.getImage(icon));
+                        }
                         name.setText(account + " " + device);
                         LinphoneManager.getLc().setCallLogsFriend(account, device);
+                    } else {
+                        name.setText(account + " " + device);
+                        LinphoneManager.getLc().setCallLogsFriend(sip, device);
                     }
                 }
                 if (cursor != null) cursor.close();
+            } else{
+                name.setText(LinphoneUtils.getAddressDisplayName(address));
             }
         }
         number.setText(address.asStringUriOnly());

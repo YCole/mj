@@ -61,6 +61,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.io.IOException;
 
+import com.gome.beautymirror.data.DataUtil;
 import android.database.Cursor;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
@@ -74,7 +75,7 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
     private CoreListenerStub mListener;
     private LinearLayout acceptUnlock;
     private LinearLayout declineUnlock;
-    private RelativeLayout topLayout;
+    private RelativeLayout topLayout,mRlContactDetail;
     private boolean alreadyAcceptedOrDeniedCall, begin;
     private float answerX, oldMove;
     private float declineX;
@@ -104,6 +105,10 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.call_incoming);
 
+        mRlContactDetail = findViewById(R.id.contact_detail);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mRlContactDetail.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
+
         name = findViewById(R.id.contact_name);
         number = findViewById(R.id.contact_number);
         contactPicture = findViewById(R.id.contact_picture);
@@ -125,7 +130,7 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
         if (LinphonePreferences.instance() != null && mCall != null && mCall.getRemoteParams() != null &&
                 LinphonePreferences.instance().shouldAutomaticallyAcceptVideoRequests() &&
                 mCall.getRemoteParams().videoEnabled()) {
-            accept.setImageResource(R.drawable.call_video_start);
+            //accept.setImageResource(R.drawable.call_video_start);
             mView.setVisibility(View.VISIBLE);
         }
 
@@ -191,12 +196,15 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
         }
         Address address = mCall.getRemoteAddress();
         LinphoneContact contact = ContactsManager.getInstance().findContactFromAddress(address);
+        byte[] icon = null;
         if (contact != null) {
             LinphoneUtils.setBgPictureFromUri(this, topLayout, contact.getPhotoUri(), contact.getThumbnailUri());
-            LinphoneUtils.setImagePictureFromUri(this, contactPicture, contact.getPhotoUri(), contact.getThumbnailUri());
+            icon = contact.getIcon();
+            if (icon != null) {
+                contactPicture.setImageBitmap(DataUtil.getImage(icon));
+            }
             name.setText(contact.getFullName());
         } else {
-            name.setText(LinphoneUtils.getAddressDisplayName(address));
             String sip = LinphoneUtils.getAddressDisplayName(address);
             if (sip != null && !"".equals(sip)) {
                 Cursor cursor = DataService.instance().getFriendForSip(sip);
@@ -206,6 +214,10 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
                     account = cursor.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT);
                     if (sip.equals(cursor.getString(DatabaseUtil.Friend.COLUMN_DEVICE_SIP))) {
                         device = cursor.getString(DatabaseUtil.Friend.COLUMN_ID);
+                    }
+                    icon = cursor.getBlob(DatabaseUtil.Friend.COLUMN_ICON);
+                    if (icon != null) {
+                        contactPicture.setImageBitmap(DataUtil.getImage(icon));
                     }
                     name.setText(account + " " + device);
                     LinphoneManager.getLc().setCallLogsFriend(account, device);
@@ -217,12 +229,20 @@ public class CallIncomingActivity extends BeautyMirrorGenericActivity implements
                         if (sip.equals(cursor.getString(DatabaseUtil.Account.COLUMN_DEVICE_SIP))) {
                             device = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
                         }
+                        icon = cursor.getBlob(DatabaseUtil.Account.COLUMN_ICON);
+                        if (icon != null) {
+                            contactPicture.setImageBitmap(DataUtil.getImage(icon));
+                        }
                         name.setText(account + " " + device);
                         LinphoneManager.getLc().setCallLogsFriend(account, device);
+                    } else {
+                        name.setText(LinphoneUtils.getAddressDisplayName(address));
+                        LinphoneManager.getLc().setCallLogsFriend(sip, device);
                     }
                 }
                 if (cursor != null) cursor.close();
-            }
+            } else
+            name.setText(LinphoneUtils.getAddressDisplayName(address));
         }
         number.setText(address.asStringUriOnly());
     }

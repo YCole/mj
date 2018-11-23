@@ -12,6 +12,9 @@ import android.widget.Toast;
 import com.gome.beautymirror.R;
 
 public class MyToast extends Toast {
+    public final static int LENGTH_SHORT = Toast.LENGTH_SHORT;
+    public final static int LENGTH_LONG = Toast.LENGTH_LONG;
+
     /**
      * Toast单例
      */
@@ -83,7 +86,7 @@ public class MyToast extends Toast {
 
     public static void showToast(Context context, CharSequence text, int time) {
         initToast(context, text);
-        if (time == Toast.LENGTH_LONG) {
+        if (time == LENGTH_LONG) {
             toast.setDuration(Toast.LENGTH_LONG);
         } else {
             toast.setDuration(Toast.LENGTH_SHORT);

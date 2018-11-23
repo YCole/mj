@@ -88,7 +88,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_marginRight="8dp"
                 android:background="@drawable/ic_message_ic_close"/>
             <TextView
                 android:layout_width="0dp"

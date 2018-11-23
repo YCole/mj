@@ -1179,8 +1179,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
         );
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         context.getWindow().setStatusBarColor(Color.TRANSPARENT);
     }
@@ -1748,11 +1747,11 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             } else if (DataUtil.BROADCAST_FRIEND.equals(action)) {
                 ContactsManager.getInstance().fetchContactsAsync();
             } else if(DataUtil.BROADCAST_PEOPLE.equals(action)) {
-                android.util.Log.d("xw", "xiongwei1 BROADCAST_PEOPLE");
+                android.util.Log.d("BeautyMirrorActivity", "BROADCAST_PEOPLE");
             } else if(DataUtil.BROADCAST_PROPOSER.equals(action)) {
                 mContactsListFragment.refreshData();
             } else if(DataUtil.BROADCAST_INFORMATION.equals(action)) {
-                android.util.Log.d("xw", "xiongwei1 BROADCAST_INFORMATION");
+                android.util.Log.d("BeautyMirrorActivity", "BROADCAST_INFORMATION");
             } else {
                 android.util.Log.d("BeautyMirrorActivity", "[mBroadcastReceiver]onReceive: action = " + action);
             }

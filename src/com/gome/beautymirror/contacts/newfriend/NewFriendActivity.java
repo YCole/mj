@@ -17,12 +17,12 @@ import com.gome.beautymirror.R;
 
 
 import java.util.ArrayList;
-
+import com.gome.beautymirror.activities.BaseStatusBarActivity;
 import gome.beautymirror.contacts.newfriend.RequestAdapter;
 import gome.beautymirror.contacts.newfriend.RequestInfo;
 import com.gome.beautymirror.activities.BeautyMirrorActivity;
 
-public class NewFriendActivity extends Activity implements View.OnClickListener {
+public class NewFriendActivity extends BaseStatusBarActivity implements View.OnClickListener {
     ImageView mBtBack;
     TextView mTvTitleName;
     RelativeLayout mRlImportCcontact;
@@ -33,7 +33,6 @@ public class NewFriendActivity extends Activity implements View.OnClickListener 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        transportStatus(this);
         setContentView(R.layout.contact_new_friend);
         mBtBack = findViewById(R.id.bt_back);
         mRlImportCcontact = findViewById(R.id.rl_import_contact);
@@ -60,18 +59,6 @@ public class NewFriendActivity extends Activity implements View.OnClickListener 
 
         mBtBack.setOnClickListener(this);
         mRlImportCcontact.setOnClickListener(this);
-    }
-
-    public static void transportStatus(Activity context){
-        context.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        Window window = context.getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        context.getWindow().setStatusBarColor(Color.TRANSPARENT);
     }
 
     @Override

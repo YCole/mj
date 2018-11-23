@@ -58,6 +58,7 @@ public class CallVideoFragment extends Fragment implements OnGestureListener, On
     private CompatibilityScaleGestureDetector mScaleDetector;
     private CallActivity inCallActivity;
     private int previewX, previewY;
+    private RelativeLayout mRlCaptureSurface;
 
     @SuppressWarnings("deprecation")
     // Warning useless because value is ignored and automatically set by new APIs.
@@ -74,6 +75,10 @@ public class CallVideoFragment extends Fragment implements OnGestureListener, On
         mVideoView = view.findViewById(R.id.videoSurface);
         mCaptureView = view.findViewById(R.id.videoCaptureSurface);
         mCaptureView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS); // Warning useless because value is ignored and automatically set by new APIs.
+
+        mRlCaptureSurface = view.findViewById(R.id.rl_captureSurface);
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mRlCaptureSurface.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
 
         fixZOrder(mVideoView, mCaptureView);
 
@@ -182,7 +187,7 @@ public class CallVideoFragment extends Fragment implements OnGestureListener, On
                 Log.e("mCaptureView is null !");
                 return;
             }
-            mCaptureView.getHolder().setFixedSize(width, height);
+            //mCaptureView.getHolder().setFixedSize(width, height);
             Log.d("Video preview size set to " + width + "x" + height);
         }
     }

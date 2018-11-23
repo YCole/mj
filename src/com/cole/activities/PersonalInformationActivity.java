@@ -76,14 +76,6 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
     }
     @Override
     protected void loadXml() {
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.activity_personal_information);
     }
 
@@ -102,7 +94,7 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
         mBtBack = findViewById(R.id.bt_back);
 
         mNickName = (MyOneLineView) findViewById(R.id.nick_name);
-        mNickName.initMine(0, getString(R.string.nick_name), "", true,false);
+        mNickName.initMine(0, getString(R.string.nick_name), "", true,true);
         mNickName.showLeftIcon(false);
         mAccount = (MyOneLineView) findViewById(R.id.account);
         mAccount.initMine(0, getString(R.string.beautymirror_account), "", true,false);

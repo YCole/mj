@@ -113,6 +113,13 @@
 
 
         <activity
+            android:name="cole.activities.MyDeviceActivity"
+            android:theme="@style/myAppTheme"/>
+
+        <!--cole add end-->
+
+
+        <activity
             android:name=".activities.BeautyMirrorLauncherActivity"
             android:exported="true"
             android:label="@string/app_name"
@@ -184,6 +191,14 @@
         </activity>
 
         <activity
+            android:name=".activities.MyDeviceDetailsActivity"
+            android:theme="@style/myAppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".activities.RecentCallActivity"
             android:theme="@style/myAppTheme">
             <intent-filter>
@@ -213,11 +228,18 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".gallery.GalleryActivity"
+            android:theme="@style/myAppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".call.CallIncomingActivity"
             android:launchMode="singleTop"
-            android:theme="@style/CallTheme">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -225,7 +247,7 @@
         <activity
             android:name=".call.CallOutgoingActivity"
             android:launchMode="singleTop"
-            android:theme="@style/CallTheme">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -233,7 +255,7 @@
         <activity
             android:name=".call.CallActivity"
             android:launchMode="singleTop"
-            android:theme="@style/FullScreen">
+            android:theme="@style/myAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>

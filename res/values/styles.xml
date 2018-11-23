@@ -309,6 +309,21 @@
         <item name="android:textSize">13sp</item>
     </style>
 
+    <style name="call_number_font">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">28dp</item>
+    </style>
+
+    <style name="call_message_font">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="call_status_font">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
     <style name="MyDialog" parent="android:style/Theme.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
@@ -316,5 +331,10 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <declare-styleable name="FilletImageViewRatio">
+        <attr name="ratio" format="float"/>
+        <attr name="angle" format="integer"/>
+        <attr name="isCircle" format="boolean"/>
+    </declare-styleable>
 
 </resources>

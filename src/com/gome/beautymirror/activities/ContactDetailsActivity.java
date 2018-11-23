@@ -1,15 +1,12 @@
 package com.gome.beautymirror.activities;
 
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -18,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
 
+import com.gome.beautymirror.data.provider.DatabaseUtil;
 import com.gome.beautymirror.ui.RoundImageView;
 import com.gome.beautymirror.LinphoneManager;
 import com.gome.beautymirror.LinphoneUtils;
@@ -42,7 +40,7 @@ import com.gome.beautymirror.data.DataUtil;
 
 import gome.beautymirror.ui.blurdialog.BlurDialog;
 
-public class ContactDetailsActivity  extends Activity  implements View.OnClickListener {
+public class ContactDetailsActivity  extends BaseStatusBarActivity  implements View.OnClickListener {
 
     TextView contactName,nickNname ,mTvAccount,mTvDevice;//备注  昵称  账户名  设备（contactName+"的设备"）
     TextView    mAddRemarkName;
@@ -55,19 +53,11 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
     private LinearLayout mAddRemarkCell;
     private String displayednumberOrAddress;
     LinearLayout mSearchRoot, mActionBar;
+    private String mStrDeviceSIP ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        Window window =getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.contact);
         contact = (LinphoneContact) getIntent().getExtras().getSerializable("Contact");
         initView();
@@ -109,6 +99,16 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
             callAccount.setTag(value);
         }
 
+        Cursor cursor = DataService.instance().getFriendsAndDevices(null,
+                DatabaseUtil.Friend.ACCOUNT + " = ?",
+                new String[]{contact.getAccount()},
+                null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            mStrDeviceSIP = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_DEVICE_SIP);
+        }
+        if(cursor!=null)
+            cursor.close();
 
         mListener = new CoreListenerStub() {
             @Override
@@ -162,6 +162,7 @@ public class ContactDetailsActivity  extends Activity  implements View.OnClickLi
                 BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(tag, contact.getFullName(), contact.getPhotoUri());
             }
         }else if(id == R.id.vedio_call_device){
+            BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mStrDeviceSIP,(contact.getFullName()+getString(R.string.contact_detail_device)), null);
 
         }else if(id == R.id.recent_call){
             Intent intent = new Intent(this, com.gome.beautymirror.activities.RecentCallActivity.class);

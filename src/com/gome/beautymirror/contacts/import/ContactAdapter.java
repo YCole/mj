@@ -19,6 +19,9 @@ import java.util.ArrayList;
 
 import gome.beautymirror.ui.MyToast;
 
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 /**
  * 联系人Adapter
  */
@@ -32,9 +35,16 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MyViewHo
     public static final int HAS_STICKY_VIEW = 2;//有头部字符
     public static final int NONE_STICKY_VIEW = 3;
 
+    RequestOptions mRequestOptions;
+
     public ContactAdapter(Context context, ArrayList<ContactInfo> list) {
         this.mContext = context;
         this.mContactList = list;
+        mRequestOptions = RequestOptions.circleCropTransform()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)//不做磁盘缓存
+                .skipMemoryCache(true);//不做内存缓存
+        mRequestOptions.placeholder(R.drawable.image_head)
+                .error(R.drawable.image_head);
     }
 
     @Override
@@ -52,12 +62,12 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MyViewHo
         String currentLetter = contactInfo.getLetter();
         String previousLetter = position >= 1 ? mContactList.get(position - 1).getLetter() : "";
 
-        if (position == 0 ) {
+        if (position == 0) {
             holder.letter.setVisibility(View.VISIBLE);
             holder.letter.setText(currentLetter);
             holder.itemView.setTag(FIRST_STICKY_VIEW);
-        }else if(position < mContactList.size() ){
-            if (!TextUtils.equals(currentLetter, previousLetter)){
+        } else if (position < mContactList.size()) {
+            if (!TextUtils.equals(currentLetter, previousLetter)) {
                 holder.letter.setVisibility(View.VISIBLE);
                 holder.letter.setText(currentLetter);
                 holder.itemView.setTag(HAS_STICKY_VIEW);
@@ -81,9 +91,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MyViewHo
         //加载联系人头像
         Glide.with(mContext)
                 .load(contactInfo.getPhoto())
-                .transform(new GlideCircleTransform(mContext))
-                .placeholder(R.drawable.image_head)
-                .error(R.drawable.image_head)
+                .apply(mRequestOptions)
                 .into(holder.iv);
 
         //条目点击事件
@@ -91,7 +99,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MyViewHo
             @Override
             public void onClick(View v) {
                 if (mContactList.get(position).getAddStatu()) {
-                    MyToast.showToast(mContext,mContext.getResources().getString(R.string.added_contact) , Toast.LENGTH_SHORT);
+                    MyToast.showToast(mContext, mContext.getResources().getString(R.string.added_contact), Toast.LENGTH_SHORT);
                     return;
                 }
                 mOnItemClickListener.onItemClick(mContactList.get(position), position);

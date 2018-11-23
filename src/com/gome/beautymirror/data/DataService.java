@@ -2,16 +2,20 @@ package com.gome.beautymirror.data;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -22,12 +26,14 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.text.ParseException;
@@ -77,7 +83,7 @@ public class DataService extends Service {
     private static final int MESSAGE_SYNC = 1;
     private static final int LOOP_SIP_TIME = 10 * 1000;
     private static final int MESSAGE_SIP = 2;
-    private static final int MESSAGE_BROADCAST_ACCOUNT = 3;
+    private static final int MESSAGE_ACCOUNT = 3;
     private static final int MESSAGE_BROADCAST_FRIEND = 4;
     private static final int MESSAGE_BROADCAST_PEOPLE = 5;
     private static final int MESSAGE_BROADCAST_PROPOSER = 6;
@@ -90,9 +96,6 @@ public class DataService extends Service {
     private TelephonyManager mTelephonyManager = null;
     private NotificationManager mNotificationManager = null;
     private ContentResolver mContentResolver = null;
-
-    private static final int NOTIF_ACCOUNT = 1;
-    private static final int NOTIF_INFORMATION = 2;
 
     public static boolean isReady() {
         return instance != null;
@@ -124,9 +127,8 @@ public class DataService extends Service {
                     result = loginSip(null);
                     break;
 
-                case MESSAGE_BROADCAST_ACCOUNT:
-                    sendBroadcast(new Intent(DataUtil.BROADCAST_ACCOUNT));
-                    result = true;
+                case MESSAGE_ACCOUNT:
+                    result = checkDialog();
                     break;
 
                 case MESSAGE_BROADCAST_FRIEND:
@@ -161,6 +163,9 @@ public class DataService extends Service {
         Log.d(TAG, "[onCreate]");
         super.onCreate();
 
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        registerReceiver(mBroadcastReceiver, filter);
+
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mContentResolver = getContentResolver();
@@ -192,13 +197,15 @@ public class DataService extends Service {
         mHandler.removeMessages(MESSAGE_SYNC);
         instance = null;
 
+        unregisterReceiver(mBroadcastReceiver);
+
         super.onDestroy();
     }
 
-    private boolean sendBroadcast(int msg) {
-        Log.d(TAG, "sendBroadcast: start");
+    private boolean sendMsgDelayed(int msg, int delayed) {
+        Log.d(TAG, "sendMsgDelayed: send " + msg + " after " + delayed);
         mHandler.removeMessages(msg);
-        return mHandler.sendEmptyMessage(msg);
+        return mHandler.sendEmptyMessageDelayed(msg, delayed);
     }
 
     public boolean initialise(Activity activity) {
@@ -219,20 +226,19 @@ public class DataService extends Service {
         Log.d(TAG, "sync: start");
         checkAccount();
         checkPeople(null, null);
-        if (!TextUtils.isEmpty(matchAccount(null))) {
-            mHandler.removeMessages(MESSAGE_SYNC);
-            result = mHandler.sendEmptyMessageDelayed(MESSAGE_SYNC, LOOP_SYNC_TIME);
+        if (!TextUtils.isEmpty(getAccount(null))) {
+            result = sendMsgDelayed(MESSAGE_SYNC, LOOP_SYNC_TIME);
         }
         return result;
     }
 
-    private String matchAccount(String account) {
+    private String getAccount(String account) {
         if (TextUtils.isEmpty(account)) {
             Cursor cursor = getAccounts(null, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {
                 account = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
             } else {
-                Log.d(TAG, "matchAccount: account is null");
+                Log.d(TAG, "getAccount: account is null");
             }
             if (cursor != null) cursor.close();
         }
@@ -265,30 +271,31 @@ public class DataService extends Service {
 
         final String info = DataUtil.getMD5(mTelephonyManager.getDeviceId());
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
-                            Uri uri = saveAccount(account, password, null, null, obj.getString("sip"), 0L, info, null);
-                            if (uri == null) {
-                                obj = DataThread.setJSONObject(DataThread.RESULT_ERROR, "account is error");
-                            } else {
-                                SaveUtils.writeUser(DataService.this, "account", account);
-                            }
-                            boolean result = initialise(null);
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
+                        Uri uri = saveAccount(account, password, null, null, obj.getString("sip"), 0L, info, null);
+                        if (uri == null) {
+                            obj = DataThread.setJSONObject(DataThread.RESULT_ERROR, "account is error");
                         } else {
-                            Log.d(TAG, "loginAccount: obj is " + obj);
+                            SaveUtils.writeUser(DataService.this, "account", account);
                         }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "loginAccount: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+                        boolean result = initialise(null);
+                        result = sendMsgDelayed(MESSAGE_ACCOUNT, 1000);
                     } else {
-                        Log.d(TAG, "loginAccount: handler is null");
+                        Log.d(TAG, "loginAccount: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "loginAccount: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "loginAccount: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -347,6 +354,8 @@ public class DataService extends Service {
                                 if (!deviceNo.equals(id)) {
                                     int count = updateAccountAndDevice(account, deviceNo);
                                     Uri uri = saveDevice(deviceNo, null, obj.getString("deviceSip"));
+                                } else {
+                                    int count = updateDevice(deviceNo, obj.getString("deviceSip"));
                                 }
                                 checkDevice();
                             } else {
@@ -357,11 +366,11 @@ public class DataService extends Service {
                             }
                             Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
                             if (!info.equals(obj.getString("loginInfo"))) {
-                                Toast.makeText(DataService.this, "Account is abnormal.", Toast.LENGTH_LONG).show();
                                 int count = logoutAccount(account);
                                 if (count > 0) {
-                                    sendBroadcast(MESSAGE_BROADCAST_ACCOUNT);
-                                    showNotification(NOTIF_ACCOUNT, "Warn", "Account is abnormal.", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                    boolean result = showDialog("Warn", "Account is abnormal.");
+                                } else {
+                                    Log.d(TAG, "checkAccount: logoutAccount fail");
                                 }
                             } else if (date.getTime() != time) {
                                 syncAccount(account);
@@ -393,22 +402,22 @@ public class DataService extends Service {
     @SuppressLint("SimpleDateFormat")
     private void syncAccount(final String account) {
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    try {
-                        JSONObject obj = (JSONObject) msg.obj;
-                        if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
-                            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
-                            int count = updateAccount(account, obj.optString("name"), DataUtil.getImage(obj.optString("icon")), date.getTime());
-                        } else {
-                            Log.d(TAG, "syncAccount: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "syncAccount: JSONException is ", e);
-                    } catch (ParseException e) {
-                        Log.e(TAG, "syncAccount: ParseException is ", e);
+            @Override
+            public void handleMessage(Message msg) {
+                try {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
+                        Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
+                        int count = updateAccount(account, obj.optString("name"), DataUtil.getImage(obj.optString("icon")), date.getTime());
+                    } else {
+                        Log.d(TAG, "syncAccount: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "syncAccount: JSONException is ", e);
+                } catch (ParseException e) {
+                    Log.e(TAG, "syncAccount: ParseException is ", e);
                 }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -422,32 +431,32 @@ public class DataService extends Service {
         if (cursor != null && cursor.moveToFirst()) {
             final String a = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
             Handler h = new Handler() {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        JSONObject obj = (JSONObject) msg.obj;
-                        try {
-                            if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
-                                Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
-                                int count = updateAccount(a, name, icon, date.getTime());
-                            } else {
-                                Log.d(TAG, "updateAccount: obj is " + obj);
-                            }
-                        } catch (JSONException e) {
-                            Log.e(TAG, "updateAccount: JSONException is ", e);
-                        } catch (ParseException e) {
-                            Log.e(TAG, "updateAccount: ParseException is ", e);
-                        }
-                        if (handler != null) {
-                            handler.obtainMessage(what, obj).sendToTarget();
+                @Override
+                public void handleMessage(Message msg) {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    try {
+                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
+                            int count = updateAccount(a, name, icon, date.getTime());
                         } else {
-                            Log.d(TAG, "updateAccount: handler is null");
+                            Log.d(TAG, "updateAccount: obj is " + obj);
                         }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "updateAccount: JSONException is ", e);
+                    } catch (ParseException e) {
+                        Log.e(TAG, "updateAccount: ParseException is ", e);
                     }
+                    if (handler != null) {
+                        handler.obtainMessage(what, obj).sendToTarget();
+                    } else {
+                        Log.d(TAG, "updateAccount: handler is null");
+                    }
+                }
             };
             final Map<String, String> params = new HashMap<String, String>();
             params.put("number", a);
-            params.put("name", name);
             params.put("password", cursor.getString(DatabaseUtil.Account.COLUMN_PASSWORD));
+            params.put("name", name);
             new DataThread(DataUtil.ACCOUNT_URL + "updateAccount", params, a, icon,
                     h.obtainMessage(0)).start();
         } else {
@@ -470,7 +479,7 @@ public class DataService extends Service {
         return mContentResolver.update(DatabaseProvider.ACCOUNT_URI, values, DatabaseUtil.Account.ACCOUNT + " = ?", new String[]{account});
     }
 
-    public boolean isAccount(String account) {
+    public boolean matchAccount(String account) {
         boolean result = false;
         Cursor cursor = getAccounts(null, DatabaseUtil.Account.ACCOUNT + " = ?", new String[]{account}, null);
         if (cursor != null && cursor.getCount() > 0) {
@@ -481,7 +490,7 @@ public class DataService extends Service {
     }
 
     public int logoutAccount(String account) {
-        account = matchAccount(account);
+        account = getAccount(account);
         if (!TextUtils.isEmpty(account)) {
             logoutSip();
             SaveUtils.writeUser(this, "account", "");
@@ -503,8 +512,59 @@ public class DataService extends Service {
         }
     }
 
+    public boolean updatePassword(String account, String password, final String newPassword, final Handler handler, final int what) {
+        if (TextUtils.isEmpty(password) || TextUtils.isEmpty(newPassword)) {
+            return false;
+        }
+        Cursor cursor = getAccounts(null, TextUtils.isEmpty(account) ? null : DatabaseUtil.Account.ACCOUNT + " = " + account, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            final String a = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
+            String p = cursor.getString(DatabaseUtil.Account.COLUMN_PASSWORD);
+            if (p != null && p.equals(password)) {
+                Handler h = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        JSONObject obj = (JSONObject) msg.obj;
+                        try {
+                            if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                                int count = updatePassword(a, newPassword);
+                            } else {
+                                Log.d(TAG, "updatePassword: obj is " + obj);
+                            }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "updatePassword: JSONException is ", e);
+                        }
+                        if (handler != null) {
+                            handler.obtainMessage(what, obj).sendToTarget();
+                        } else {
+                            Log.d(TAG, "updatePassword: handler is null");
+                        }
+                    }
+                };
+                final Map<String, String> params = new HashMap<String, String>();
+                params.put("number", a);
+                params.put("password", password);
+                params.put("newPassword", newPassword);
+                new DataThread(DataUtil.ACCOUNT_URL + "updatePassword", params,
+                        h.obtainMessage(0)).start();
+            } else {
+                Log.d(TAG, "updatePassword: password is error");
+            }
+        } else {
+            Log.d(TAG, "updatePassword: account is null");
+        }
+        if (cursor != null) cursor.close();
+        return true;
+    }
+
+    private int updatePassword(String account, String password) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.Account.PASSWORD, password);
+        return mContentResolver.update(DatabaseProvider.ACCOUNT_URI, values, DatabaseUtil.Account.ACCOUNT + " = ?", new String[]{account});
+    }
+
     public void requestReset(String account, Handler handler, int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
         params.put("smsType", "2");
@@ -513,7 +573,7 @@ public class DataService extends Service {
     }
 
     public void resetAccount(String account, String code, String password, Handler handler, int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
         params.put("smsType", "2");
@@ -524,7 +584,7 @@ public class DataService extends Service {
     }
 
     public void deleteAccount(String account, Handler handler, int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         int count = logoutAccount(account);
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -532,45 +592,103 @@ public class DataService extends Service {
                 handler == null ? null : handler.obtainMessage(what)).start();
     }
 
-    public void requestKey(String id, Handler handler, int what) {
+    public String getDevice(String id) {
+        if (TextUtils.isEmpty(id)) {
+            Cursor cursor = getAccounts(null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                id = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
+            } else {
+                Log.d(TAG, "getDevice: id is null");
+            }
+            if (cursor != null) cursor.close();
+        }
+        return id;
+    }
+
+    private String mId;
+    private String mKey;
+
+    public boolean requestKey(String id, final Handler handler, final int what) {
+        if (!TextUtils.isEmpty(getDevice(null))) {
+            showToast("Device is exist", Toast.LENGTH_SHORT);
+            return false;
+        } else if (TextUtils.isEmpty(id)) {
+            Log.d(TAG, "requestKey: return");
+            return false;
+        }
+        mId = id;
+        Handler h = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        mKey = obj.getString("deviceKey");
+                    } else {
+                        Log.d(TAG, "requestKey: obj is " + obj);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "requestKey: JSONException is ", e);
+                }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "requestKey: handler is null");
+                }
+            }
+        };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("deviceId", id);
         new DataThread(DataUtil.DEVICE_URL + "reqDeviceKey", params,
-                handler == null ? null : handler.obtainMessage(what)).start();
+                h.obtainMessage(0)).start();
+        return true;
     }
 
-    public void bindDevice(String account, final String id, String time, final String name, final Handler handler, final int what) {
-        final String a = matchAccount(account);
+    public boolean bindDevice(String account, String id, String key, final String name, final Handler handler, final int what) {
+        final String a = getAccount(account);
+        if (TextUtils.isEmpty(id)) id = mId;
+        mId = null;
+        final String d = id;
+        if (TextUtils.isEmpty(key)) key = mKey;
+        mKey = null;
+        if (!TextUtils.isEmpty(getDevice(null))) {
+            showToast("Device is exist", Toast.LENGTH_SHORT);
+            return false;
+        } else if (TextUtils.isEmpty(a) || TextUtils.isEmpty(d) || TextUtils.isEmpty(key)) {
+            Log.d(TAG, "bindDevice: return");
+            return false;
+        }
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            int count = updateAccountAndDevice(a, id);
-                            Uri uri = saveDevice(id, name, obj.optString("sipNo"));
-                        } else {
-                            Log.d(TAG, "bindDevice: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "bindDevice: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        int count = updateAccountAndDevice(a, d);
+                        Uri uri = saveDevice(d, name, obj.optString("sipNo"));
                     } else {
-                        Log.d(TAG, "bindDevice: handler is null");
+                        Log.d(TAG, "bindDevice: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "bindDevice: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "bindDevice: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", a);
-        params.put("deviceId", id);
-        params.put("createTime", time);
+        params.put("deviceId", d);
+        params.put("deviceKey", key);
         if (!TextUtils.isEmpty(name)) {
             params.put("deviceName", name);
         }
         new DataThread(DataUtil.DEVICE_URL + "bindMagic", params,
                 h.obtainMessage(0)).start();
+        return true;
     }
 
     private Uri saveDevice(String id, String name, String sip) {
@@ -590,23 +708,24 @@ public class DataService extends Service {
             final String id = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
             if (!TextUtils.isEmpty(id)) {
                 Handler h = new Handler() {
-                        @Override
-                        public void handleMessage(Message msg) {
-                            try {
-                                JSONObject obj = (JSONObject) msg.obj;
-                                Log.d(TAG, "xiongwei1 checkDevice: obj is " + obj);
-                                if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                                    int count = updateDevice(id, obj.optString("deviceName"));
-                                    if (obj.getInt("deviceStatus") == DEVICE_UNBIND) {
-                                        Log.d(TAG, "checkDevice: ready to unbind");
-                                    }
-                                } else {
-                                    Log.d(TAG, "checkDevice: obj is " + obj);
+                    @Override
+                    public void handleMessage(Message msg) {
+                        try {
+                            JSONObject obj = (JSONObject) msg.obj;
+                            Log.d(TAG, "xiongwei1 checkDevice: obj is " + obj);
+                            if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                                String name = obj.optString("deviceName");
+                                int count = updateDevice(id, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, 0L);
+                                if (obj.getInt("deviceStatus") == DEVICE_UNBIND) {
+                                    showNotification(NOTIF_DEVICE, "Notification", "Ready to unbind.", new Intent(DataService.this, BeautyMirrorActivity.class));
                                 }
-                            } catch (JSONException e) {
-                                Log.e(TAG, "checkDevice: JSONException is ", e);
+                            } else {
+                                Log.d(TAG, "checkDevice: obj is " + obj);
                             }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "checkDevice: JSONException is ", e);
                         }
+                    }
                 };
                 final Map<String, String> params = new HashMap<String, String>();
                 params.put("number", cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT));
@@ -622,6 +741,7 @@ public class DataService extends Service {
         if (cursor != null) cursor.close();
     }
 
+    @SuppressLint("SimpleDateFormat")
     public void updateDevice(String account, String id, final String name, final Handler handler, final int what) {
         Cursor cursor = getAccounts(null, null, null, null);
         if (account != null || (cursor != null && cursor.moveToFirst())) {
@@ -629,24 +749,27 @@ public class DataService extends Service {
             final String d = (id != null ? id : cursor.getString(DatabaseUtil.Account.COLUMN_ID));
             if (!TextUtils.isEmpty(d)) {
                 Handler h = new Handler() {
-                        @Override
-                        public void handleMessage(Message msg) {
-                            JSONObject obj = (JSONObject) msg.obj;
-                            try {
-                                if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                                    int count = updateDevice(d, name);
-                                } else {
-                                    Log.d(TAG, "updateDevice: obj is " + obj);
-                                }
-                            } catch (JSONException e) {
-                                Log.e(TAG, "updateDevice: JSONException is ", e);
-                            }
-                            if (handler != null) {
-                                handler.obtainMessage(what, obj).sendToTarget();
+                    @Override
+                    public void handleMessage(Message msg) {
+                        JSONObject obj = (JSONObject) msg.obj;
+                        try {
+                            if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                                Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
+                                int count = updateDevice(d, name, date.getTime());
                             } else {
-                                Log.d(TAG, "updateDevice: handler is null");
+                                Log.d(TAG, "updateDevice: obj is " + obj);
                             }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "updateDevice: JSONException is ", e);
+                        } catch (ParseException e) {
+                            Log.e(TAG, "updateDevice: ParseException is ", e);
                         }
+                        if (handler != null) {
+                            handler.obtainMessage(what, obj).sendToTarget();
+                        } else {
+                            Log.d(TAG, "updateDevice: handler is null");
+                        }
+                    }
                 };
                 final Map<String, String> params = new HashMap<String, String>();
                 params.put("number", a);
@@ -663,11 +786,18 @@ public class DataService extends Service {
         if (cursor != null) cursor.close();
     }
 
-    private int updateDevice(String id, String name) {
+    private int updateDevice(String id, String name, Long time) {
         ContentValues values = new ContentValues();
         values.put(DatabaseUtil.Device.PERMISSION, DatabaseUtil.Device.PERMISSION_PUBLIC);
         values.put(DatabaseUtil.Device.DEVICE_NAME, name);
-        values.put(DatabaseUtil.Device.DEVICE_TIME, 0L);
+        values.put(DatabaseUtil.Device.DEVICE_TIME, time);
+        return mContentResolver.update(DatabaseProvider.DEVICES_URI, values, DatabaseUtil.Device.ID + " = ?", new String[]{id});
+    }
+
+    private int updateDevice(String id, String sip) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.Device.TYPE, DatabaseUtil.Device.TYPE_MIRROR);
+        values.put(DatabaseUtil.Device.DEVICE_SIP, sip);
         return mContentResolver.update(DatabaseProvider.DEVICES_URI, values, DatabaseUtil.Device.ID + " = ?", new String[]{id});
     }
 
@@ -698,25 +828,25 @@ public class DataService extends Service {
             final String d = (id != null ? id : cursor.getString(DatabaseUtil.Account.COLUMN_ID));
             if (!TextUtils.isEmpty(d)) {
                 Handler h = new Handler() {
-                        @Override
-                        public void handleMessage(Message msg) {
-                            JSONObject obj = (JSONObject) msg.obj;
-                            try {
-                                if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                                    int count = updateAccountAndDevice(a, null);
-                                    count = deleteDevice(d);
-                                } else {
-                                    Log.d(TAG, "unbindDevice: obj is " + obj);
-                                }
-                            } catch (JSONException e) {
-                                Log.e(TAG, "unbindDevice: JSONException is ", e);
-                            }
-                            if (handler != null) {
-                                handler.obtainMessage(what, obj).sendToTarget();
+                    @Override
+                    public void handleMessage(Message msg) {
+                        JSONObject obj = (JSONObject) msg.obj;
+                        try {
+                            if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                                int count = updateAccountAndDevice(a, null);
+                                count = deleteDevice(d);
                             } else {
-                                Log.d(TAG, "unbindDevice: handler is null");
+                                Log.d(TAG, "unbindDevice: obj is " + obj);
                             }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "unbindDevice: JSONException is ", e);
                         }
+                        if (handler != null) {
+                            handler.obtainMessage(what, obj).sendToTarget();
+                        } else {
+                            Log.d(TAG, "unbindDevice: handler is null");
+                        }
+                    }
                 };
                 final Map<String, String> params = new HashMap<String, String>();
                 params.put("number", a);
@@ -780,122 +910,122 @@ public class DataService extends Service {
         Cursor cursor = getAccounts(null, null, null, null);
         if (cursor != null && cursor.moveToFirst()) {
             Handler h = new Handler() {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        try {
-                            JSONObject obj = (JSONObject) msg.obj;
-                            Log.d(TAG, "xiongwei1 checkFriend: obj is " + obj);
-                            if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
-                                Map<String, Friend> friends = new HashMap<String, Friend>();
-                                Cursor cursor = getFriends(null, null, null, null);
-                                while(cursor.moveToNext()) {
-                                    friends.put(cursor.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT),
-                                            new Friend(cursor.getLong(DatabaseUtil.Friend.COLUMN_TIME), cursor.getString(DatabaseUtil.Friend.COLUMN_ID)));
-                                }
-                                if (cursor != null) cursor.close();
+                @Override
+                public void handleMessage(Message msg) {
+                    try {
+                        JSONObject obj = (JSONObject) msg.obj;
+                        Log.d(TAG, "xiongwei1 checkFriend: obj is " + obj);
+                        if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
+                            Map<String, Friend> friends = new HashMap<String, Friend>();
+                            Cursor cursor = getFriends(null, null, null, null);
+                            while(cursor.moveToNext()) {
+                                friends.put(cursor.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT),
+                                        new Friend(cursor.getLong(DatabaseUtil.Friend.COLUMN_TIME), cursor.getString(DatabaseUtil.Friend.COLUMN_ID)));
+                            }
+                            if (cursor != null) cursor.close();
 
-                                JSONArray array = new JSONArray(obj.getString("friendList"));
-                                for (int i = 0; i < array.length(); i++) {
-                                    JSONObject data = array.getJSONObject(i);
-                                    String account = data.getString("number");
-                                    Long time = data.getLong("friendTime");
-                                    Log.d(TAG, "checkFriend: array[" + i + "] is " + data);
-                                    if (data.getInt("friendStatus") == FRIEND_REQUEST) {
-                                        Long requestTime = data.getLong("requestTime");
-                                        String message = data.getString("friendMessage");
-                                        cursor = getProposers(null,
-                                                DatabaseUtil.Proposer.ACCOUNT + " = ?",
-                                                new String[] {account},
-                                                null);
-                                        if (cursor != null && cursor.moveToFirst()) {
-                                            if (requestTime != cursor.getLong(DatabaseUtil.Proposer.COLUMN_REQUEST_TIME)) {
-                                                int count = updateProposer(account, requestTime, message, DatabaseUtil.Proposer.STATUS_NEW);
-                                            }
-                                            if (time != cursor.getLong(DatabaseUtil.Proposer.COLUMN_TIME)) {
-                                                syncProposer(account, time);
+                            JSONArray array = new JSONArray(obj.getString("friendList"));
+                            for (int i = 0; i < array.length(); i++) {
+                                JSONObject data = array.getJSONObject(i);
+                                String account = data.getString("number");
+                                Long time = data.getLong("friendTime");
+                                Log.d(TAG, "checkFriend: array[" + i + "] is " + data);
+                                if (data.getInt("friendStatus") == FRIEND_REQUEST) {
+                                    Long requestTime = data.getLong("requestTime");
+                                    String message = data.getString("friendMessage");
+                                    cursor = getProposers(null,
+                                            DatabaseUtil.Proposer.ACCOUNT + " = ?",
+                                            new String[] {account},
+                                            null);
+                                    if (cursor != null && cursor.moveToFirst()) {
+                                        if (requestTime != cursor.getLong(DatabaseUtil.Proposer.COLUMN_REQUEST_TIME)) {
+                                            int count = updateProposer(account, requestTime, message, DatabaseUtil.Proposer.STATUS_NEW);
+                                        }
+                                        if (time != cursor.getLong(DatabaseUtil.Proposer.COLUMN_TIME)) {
+                                            syncProposer(account, time);
+                                        }
+                                    } else {
+                                        Uri uri = saveProposer(account,
+                                                null,
+                                                null,
+                                                0L,
+                                                requestTime,
+                                                message,
+                                                DatabaseUtil.Proposer.STATUS_NEW);
+                                        syncProposer(account, time);
+                                    }
+                                    if (cursor != null) cursor.close();
+                                    sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                                } else {
+                                    String id = data.optString("deviceNo");
+                                    if (friends.size() > 0 && friends.get(account) != null) {
+                                        Friend friend = friends.get(account);
+                                        if (!TextUtils.isEmpty(id)) {
+                                            if (!id.equals(friend.getId())) {
+                                                int count = updateFriendAndDevice(account, id);
+                                                Uri uri = saveFriendDevice(id, null, data.optString("deviceSip"));
+                                            } else {
+                                                int count = updateFriendDevice(id, null, data.optString("deviceSip"));
                                             }
                                         } else {
-                                            Uri uri = saveProposer(account,
+                                            if (!TextUtils.isEmpty(id)) {
+                                                int count = updateFriendAndDevice(account, null);
+                                                count = deleteFriendDevice(friend.getId());
+                                            }
+                                        }
+                                        if (time != friend.getTime()) {
+                                            syncFriend(account);
+                                        }
+                                        friends.remove(account);
+                                    } else {
+                                        if (!TextUtils.isEmpty(id)) {
+                                            Uri uri = saveFriend(account,
                                                     null,
                                                     null,
                                                     0L,
-                                                    requestTime,
-                                                    message,
-                                                    DatabaseUtil.Proposer.STATUS_NEW);
-                                            syncProposer(account, time);
-                                        }
-                                        if (cursor != null) cursor.close();
-                                        sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                                    } else {
-                                        String id = data.optString("deviceNo");
-                                        if (friends.size() > 0 && friends.get(account) != null) {
-                                            Friend friend = friends.get(account);
-                                            if (!TextUtils.isEmpty(id)) {
-                                                if (!id.equals(friend.getId())) {
-                                                    int count = updateFriendAndDevice(account, id);
-                                                    Uri uri = saveFriendDevice(id, null, data.optString("deviceSip"));
-                                                } else {
-                                                    int count = updateFriendDevice(id, null, data.optString("deviceSip"));
-                                                }
-                                            } else {
-                                                if (!TextUtils.isEmpty(id)) {
-                                                    int count = updateFriendAndDevice(account, null);
-                                                    count = deleteFriendDevice(friend.getId());
-                                                }
-                                            }
-                                            if (time != friend.getTime()) {
-                                                syncFriend(account);
-                                            }
-                                            friends.remove(account);
+                                                    id,
+                                                    data.optString("friendComment"),
+                                                    data.getString("accountSip"));
+                                            uri = saveFriendDevice(id, null, data.optString("deviceSip"));
                                         } else {
-                                            if (!TextUtils.isEmpty(id)) {
-                                                Uri uri = saveFriend(account,
-                                                        null,
-                                                        null,
-                                                        0L,
-                                                        id,
-                                                        data.optString("friendComment"),
-                                                        data.getString("accountSip"));
-                                                uri = saveFriendDevice(id, null, data.optString("deviceSip"));
-                                            } else {
-                                                Uri uri = saveFriend(account,
-                                                        null,
-                                                        null,
-                                                        0L,
-                                                        null,
-                                                        data.optString("friendComment"),
-                                                        data.getString("accountSip"));
-                                            }
-                                            int count = updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
-                                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                                            count = updatePeople(account, DatabaseUtil.People.STATUS_FRIEND);
-                                            count = updateInformation(account, DatabaseUtil.Information.REQUEST_CONFIRMED);
-                                            if (count > 0) {
-                                                sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                                                showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
-                                            }
-                                            syncFriend(account);
+                                            Uri uri = saveFriend(account,
+                                                    null,
+                                                    null,
+                                                    0L,
+                                                    null,
+                                                    data.optString("friendComment"),
+                                                    data.getString("accountSip"));
                                         }
-                                        sendBroadcast(MESSAGE_BROADCAST_FRIEND);
+                                        int count = updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
+                                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                                        count = updatePeople(account, DatabaseUtil.People.STATUS_FRIEND);
+                                        count = updateInformation(account, DatabaseUtil.Information.REQUEST_CONFIRMED);
+                                        if (count > 0) {
+                                            sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
+                                            showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                        }
+                                        syncFriend(account);
                                     }
+                                    sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
                                 }
-                                for (String account : friends.keySet()) {
-                                    int count = deleteFriend(account);
-                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
-                                    count = updatePeople(account, DatabaseUtil.People.STATUS_UNKNOW);
-                                    count = deleteProposer(account);
-                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                                    count = deleteCalllog(account);
-                                    count = deleteInformation(account);
-                                    if (count > 0) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                                }
-                            } else {
-                                Log.d(TAG, "checkFriend: obj is " + obj);
                             }
-                        } catch (JSONException e) {
-                            Log.e(TAG, "checkFriend: JSONException is ", e);
+                            for (String account : friends.keySet()) {
+                                int count = deleteFriend(account);
+                                if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                                count = updatePeople(account, DatabaseUtil.People.STATUS_UNKNOW);
+                                count = deleteProposer(account);
+                                if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                                count = deleteCalllog(account);
+                                count = deleteInformation(account);
+                                if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
+                            }
+                        } else {
+                            Log.d(TAG, "checkFriend: obj is " + obj);
                         }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "checkFriend: JSONException is ", e);
                     }
+                }
             };
             final Map<String, String> params = new HashMap<String, String>();
             params.put("number", cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT));
@@ -910,30 +1040,30 @@ public class DataService extends Service {
     @SuppressLint("SimpleDateFormat")
     private void syncFriend(final String account) {
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    try {
-                        JSONObject obj = (JSONObject) msg.obj;
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            String name = obj.optString("name");
-                            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
-                            int count = updateFriend(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
-                            count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                            count = updatePeople(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("icon")), date.getTime());
-                        } else {
-                            Log.d(TAG, "syncFriend: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "syncFriend: JSONException is ", e);
-                    } catch (ParseException e) {
-                        Log.e(TAG, "syncFriend: ParseException is ", e);
+            @Override
+            public void handleMessage(Message msg) {
+                try {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        String name = obj.optString("name");
+                        Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
+                        int count = updateFriend(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                        count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                        count = updatePeople(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                    } else {
+                        Log.d(TAG, "syncFriend: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "syncFriend: JSONException is ", e);
+                } catch (ParseException e) {
+                    Log.e(TAG, "syncFriend: ParseException is ", e);
                 }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -968,29 +1098,29 @@ public class DataService extends Service {
     }
 
     public boolean updateFriend(String account, final String friendAccount, final String comment, final Handler handler, final int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         if (TextUtils.isEmpty(account) || TextUtils.isEmpty(friendAccount)) {
             return false;
         }
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            int count = updateFriend(friendAccount, comment);
-                        } else {
-                            Log.d(TAG, "updateFriend: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "updateFriend: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        int count = updateFriend(friendAccount, comment);
                     } else {
-                        Log.d(TAG, "updateFriend: handler is null");
+                        Log.d(TAG, "updateFriend: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "updateFriend: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "updateFriend: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -1012,33 +1142,33 @@ public class DataService extends Service {
     }
 
     public void deleteFriend(String account, final String friendAccount, final Handler handler, final int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            int count = deleteFriend(friendAccount);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
-                            count = updatePeople(friendAccount, DatabaseUtil.People.STATUS_UNKNOW);
-                            count = deleteProposer(friendAccount);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                            count = deleteCalllog(friendAccount);
-                            count = deleteInformation(friendAccount);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                        } else {
-                            Log.d(TAG, "deleteFriend: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "deleteFriend: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        int count = deleteFriend(friendAccount);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                        count = updatePeople(friendAccount, DatabaseUtil.People.STATUS_UNKNOW);
+                        count = deleteProposer(friendAccount);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                        count = deleteCalllog(friendAccount);
+                        count = deleteInformation(friendAccount);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
                     } else {
-                        Log.d(TAG, "loginAccount: handler is null");
+                        Log.d(TAG, "deleteFriend: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "deleteFriend: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "loginAccount: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -1104,35 +1234,35 @@ public class DataService extends Service {
 
     public void queryPeople(String number, final Handler handler, final int what) {
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            String name = obj.getString("contact_name");
-                            int count = updatePeople(obj.getString("contact_account"),
-                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
-                            count = updateFriend(obj.getString("contact_account"),
-                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_FRIEND);
-                            count = updateProposer(obj.getString("contact_account"),
-                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                        } else {
-                            Log.d(TAG, "queryPeople: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "queryPeople: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        String name = obj.getString("contact_name");
+                        int count = updatePeople(obj.getString("contact_account"),
+                                (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                        count = updateFriend(obj.getString("contact_account"),
+                                (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                        count = updateProposer(obj.getString("contact_account"),
+                                (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
                     } else {
-                        Log.d(TAG, "queryPeople: handler is null");
+                        Log.d(TAG, "queryPeople: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "queryPeople: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "queryPeople: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("contactNumber", number);
@@ -1146,7 +1276,7 @@ public class DataService extends Service {
         } else {
             Log.d(TAG, "checkPeople: cursor is " + cursor);
         }
-        exception = matchAccount(exception);
+        exception = getAccount(exception);
         if (cursor != null && cursor.moveToNext()) {
             syncPeople(cursor, exception);
         } else {
@@ -1177,29 +1307,29 @@ public class DataService extends Service {
         if (!TextUtils.isEmpty(number) && !number.equals(exception)
                 && cursor.getInt(DatabaseUtil.People.COLUMN_STATUS) != DatabaseUtil.People.STATUS_FRIEND) {
             Handler h = new Handler() {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        try {
-                            JSONObject obj = (JSONObject) msg.obj;
-                            if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                                String name = obj.getString("contact_name");
-                                int count = updatePeople(contactId, obj.getString("contact_account"),
-                                        (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                        DataUtil.getImage(obj.optString("contact_icon")), 0L);
-                                count = updateProposer(obj.getString("contact_account"),
-                                        (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                        DataUtil.getImage(obj.optString("contact_icon")), 0L);
-                                if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                            } else if ("111".equals(obj.getString(DataThread.RESULT_CODE))) {
-                                int count = updatePeople(contactId, null, null, null, 0L);
-                            } else {
-                                Log.d(TAG, "syncPeople: obj is " + obj);
-                            }
-                        } catch (JSONException e) {
-                            Log.e(TAG, "syncPeople: JSONException is ", e);
+                @Override
+                public void handleMessage(Message msg) {
+                    try {
+                        JSONObject obj = (JSONObject) msg.obj;
+                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                            String name = obj.getString("contact_name");
+                            int count = updatePeople(contactId, obj.getString("contact_account"),
+                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                            count = updateProposer(obj.getString("contact_account"),
+                                    (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
+                                    DataUtil.getImage(obj.optString("contact_icon")), 0L);
+                            if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                        } else if ("111".equals(obj.getString(DataThread.RESULT_CODE))) {
+                            int count = updatePeople(contactId, null, null, null, 0L);
+                        } else {
+                            Log.d(TAG, "syncPeople: obj is " + obj);
                         }
-                        checkPeople(cursor, exception);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "syncPeople: JSONException is ", e);
                     }
+                    checkPeople(cursor, exception);
+                }
             };
             final Map<String, String> params = new HashMap<String, String>();
             params.put("contactNumber", number);
@@ -1364,34 +1494,34 @@ public class DataService extends Service {
         return sb.toString();
     }
 
-    public void requestFriend(String account, final String number, String message, final Handler handler, final int what) {
-        account = matchAccount(account);
+    public boolean requestFriend(String account, final String number, String message, final Handler handler, final int what) {
+        account = getAccount(account);
         if (TextUtils.isEmpty(account) || TextUtils.isEmpty(number) || account.equals(number)) {
             Log.d(TAG, "requestFriend: return");
-            return;
+            return false;
         }
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            Uri uri = logInformation(number, DatabaseUtil.Information.REQUEST_FRIEND);
-                            if (uri != null) sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                        } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
-                            checkFriend();
-                        } else {
-                            Log.d(TAG, "requestFriend: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "requestFriend: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        Uri uri = logInformation(number, DatabaseUtil.Information.REQUEST_FRIEND);
+                        if (uri != null) sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
+                    } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
+                        checkFriend();
                     } else {
-                        Log.d(TAG, "requestFriend: handler is null");
+                        Log.d(TAG, "requestFriend: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "requestFriend: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "requestFriend: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -1400,25 +1530,26 @@ public class DataService extends Service {
         params.put("contactMessage", message);
         new DataThread(DataUtil.FRIEND_URL + "addFriendRequest", params,
                 h.obtainMessage(0)).start();
+        return true;
     }
 
     private void syncProposer(final String account, final Long time) {
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    try {
-                        JSONObject obj = (JSONObject) msg.obj;
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            String name = obj.optString("friendName");
-                            int count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, DataUtil.getImage(obj.optString("friendIcon")), time);
-                            if (count > 0) sendBroadcast(MESSAGE_BROADCAST_PROPOSER);
-                        } else {
-                            Log.d(TAG, "syncProposer: obj is " + obj);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "syncProposer: JSONException is ", e);
+            @Override
+            public void handleMessage(Message msg) {
+                try {
+                    JSONObject obj = (JSONObject) msg.obj;
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        String name = obj.optString("friendName");
+                        int count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, DataUtil.getImage(obj.optString("friendIcon")), time);
+                        if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                    } else {
+                        Log.d(TAG, "syncProposer: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "syncProposer: JSONException is ", e);
                 }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("friendNumber", account);
@@ -1474,36 +1605,36 @@ public class DataService extends Service {
     }
 
     public void confirmProposer(String account, final String friendAccount, final int request, final Handler handler, final int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            int count = updateProposer(friendAccount,
-                                    request == REQUEST_CANCEL ? DatabaseUtil.Proposer.STATUS_IGNORE : DatabaseUtil.Proposer.STATUS_FRIEND);
-                            if (request == REQUEST_OK) {
-                                Uri uri = logInformation(friendAccount, DatabaseUtil.Information.REQUEST_CONFIRM);
-                                if (uri != null) {
-                                    sendBroadcast(MESSAGE_BROADCAST_INFORMATION);
-                                }
-                                checkFriend();
-                            } else {
-                                Log.d(TAG, "confirmProposer: cancel for " + friendAccount);
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        int count = updateProposer(friendAccount,
+                                request == REQUEST_CANCEL ? DatabaseUtil.Proposer.STATUS_IGNORE : DatabaseUtil.Proposer.STATUS_FRIEND);
+                        if (request == REQUEST_OK) {
+                            Uri uri = logInformation(friendAccount, DatabaseUtil.Information.REQUEST_CONFIRM);
+                            if (uri != null) {
+                                sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
                             }
+                            checkFriend();
                         } else {
-                            Log.d(TAG, "confirmProposer: obj is " + obj);
+                            Log.d(TAG, "confirmProposer: cancel for " + friendAccount);
                         }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "confirmProposer: JSONException is ", e);
-                    }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
                     } else {
-                        Log.d(TAG, "confirmProposer: handler is null");
+                        Log.d(TAG, "confirmProposer: obj is " + obj);
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "confirmProposer: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "confirmProposer: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -1758,7 +1889,7 @@ public class DataService extends Service {
                 Log.e(TAG, "loginSip: CoreException is ", e);
             } catch (Exception e) {
                 Log.e(TAG, "loginSip: Exception is ", e);
-                result = mHandler.sendEmptyMessageDelayed(MESSAGE_SIP, LOOP_SIP_TIME);
+                result = sendMsgDelayed(MESSAGE_SIP, LOOP_SIP_TIME);
             }
         }
 
@@ -1773,7 +1904,7 @@ public class DataService extends Service {
     }
 
     public boolean checkSipRelation(String account, String friendAccount, String id, final Handler handler, final int what) {
-        account = matchAccount(account);
+        account = getAccount(account);
         if (TextUtils.isEmpty(account) || (TextUtils.isEmpty(friendAccount) && TextUtils.isEmpty(id))) {
             Log.d(TAG, "checkSipRelation: return false");
             return false;
@@ -1782,23 +1913,22 @@ public class DataService extends Service {
                     + (TextUtils.isEmpty(friendAccount) ? "id:" + id : "account:" + friendAccount));
         }
         Handler h = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    JSONObject obj = (JSONObject) msg.obj;
-                    try {
-                        if (!DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
-                            checkAccount();
-                            checkFriend();
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "checkSipRelation: JSONException is ", e);
+            @Override
+            public void handleMessage(Message msg) {
+                JSONObject obj = (JSONObject) msg.obj;
+                try {
+                    if (!DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        checkFriend();
                     }
-                    if (handler != null) {
-                        handler.obtainMessage(what, obj).sendToTarget();
-                    } else {
-                        Log.d(TAG, "checkSipRelation: handler is null");
-                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "checkSipRelation: JSONException is ", e);
                 }
+                if (handler != null) {
+                    handler.obtainMessage(what, obj).sendToTarget();
+                } else {
+                    Log.d(TAG, "checkSipRelation: handler is null");
+                }
+            }
         };
         final Map<String, String> params = new HashMap<String, String>();
         params.put("number", account);
@@ -1830,6 +1960,13 @@ public class DataService extends Service {
         }
     }
 
+    private void showToast(String text, int length) {
+        Toast.makeText(this, text, length).show();
+    }
+
+    private static final int NOTIF_DEVICE = 1;
+    private static final int NOTIF_INFORMATION = 2;
+
     private void showNotification(int id, String title, String text, Intent intent) {
         Notification.Builder builder = new Notification.Builder(this);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -1852,6 +1989,60 @@ public class DataService extends Service {
         Notification notify = builder.build();
         mNotificationManager.notify(id, notify);
     }
+
+    private boolean checkDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean showDialog(String title, String text) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            showToast(text, Toast.LENGTH_LONG);
+            sendBroadcast(new Intent(DataUtil.BROADCAST_ACCOUNT));
+            return false;
+        }
+
+        final AlertDialog dialog = new AlertDialog.Builder(this).setIcon(R.mipmap.ic_launcher)
+                .setTitle(title)
+                .setMessage(text)
+                .setPositiveButton("Yes",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(DataService.this, BeautyMirrorActivity.class));
+                            dialog.dismiss();
+                        }
+                    })
+                .setNegativeButton("No",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            sendBroadcast(new Intent(DataUtil.BROADCAST_ACCOUNT));
+                            dialog.dismiss();
+                        }
+                    }).create();
+        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_PHONE);
+        dialog.show();
+        return true;
+    }
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                sync();
+            } else {
+                Log.d(TAG, "[mBroadcastReceiver]onReceive: action is " + action);
+            }
+        }
+    };
 
     public static boolean checkResult(Message msg) {
         boolean result = false;

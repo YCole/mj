@@ -67,18 +67,39 @@
     </LinearLayout>
 
 
-    <EditText
-
-        android:id="@+id/et_login_input_password"
+    <LinearLayout
+        android:id="@+id/layout_check_password"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/botton_white_rectangle_background"
-        android:gravity="center"
-        android:hint="@string/et_login_password"
-        android:maxLength="11"
-        android:maxLines="1"
-        android:singleLine="true" />
+        android:orientation="horizontal">
+
+        <EditText
+
+            android:id="@+id/et_login_input_password"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:hint="@string/et_login_password"
+            android:background="@null"
+            android:layout_weight="6"
+            android:inputType="textPassword"
+            android:maxLength="11"
+            android:maxLines="1"
+            android:singleLine="true" />
+
+        <ImageView
+            android:id="@+id/check_password"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_weight="1"
+            android:src="@drawable/icon_conceal"
+            android:scaleType="center"
+            android:gravity="center" />
+    </LinearLayout>
 
 
     <FrameLayout

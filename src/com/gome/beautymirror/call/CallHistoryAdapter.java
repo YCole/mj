@@ -48,7 +48,7 @@ import com.gome.beautymirror.ui.RoundImageView;
 public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.ViewHolder> implements SlidingButtonView.IonSlidingButtonListener {
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
             View.OnLongClickListener {
-        public TextView mCallName,mInformationName;
+        public TextView mCallName,mInformationConfirmed,mInformationConfirm;
         public ImageView callDirection;
         public RoundImageView contactPicture;
         public ImageView vedioCall;
@@ -60,17 +60,18 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
         public ViewHolder(View view, CallHistoryAdapter.ViewHolder.ClickListener listener) {
             super(view);
             mCallName = view.findViewById(R.id.call_name);
-            mInformationName = view.findViewById(R.id.notification_name);
+            mInformationConfirmed = view.findViewById(R.id.information_confirmed);
+            mInformationConfirm = view.findViewById(R.id.information_confirm);
             callDirection = view.findViewById(R.id.icon);
             contactPicture = view.findViewById(R.id.contact_picture);
             callDate = view.findViewById(R.id.call_date);
-            informationData = view.findViewById(R.id.notification_date);
+            informationData = view.findViewById(R.id.information_date);
             content = view.findViewById(R.id.content);
-            mInformationTitle = view.findViewById(R.id.notification_title);
+            mInformationTitle = view.findViewById(R.id.information_title);
             vedioCall = view.findViewById(R.id.vedio_call);
             historyClickLayout = view.findViewById(R.id.history_click);
             mLlCallLog = view.findViewById(R.id.ll_call_log);
-            mLlInformation = view.findViewById(R.id.ll_notification);
+            mLlInformation = view.findViewById(R.id.ll_information);
             mListener = listener;
             vedioCall.setOnClickListener(this);
             historyClickLayout.setOnClickListener(this);
@@ -118,6 +119,11 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
 
     public Object getItem(int position) {
         return mList_key.get(position);
+    }
+
+    public void updateDataSet(ArrayList<Object> list_key) {
+        mList_key = list_key;
+        notifyDataSetChanged();
     }
 
     private boolean allOpen = false;
@@ -172,8 +178,15 @@ public class CallHistoryAdapter extends SelectableAdapter<CallHistoryAdapter.Vie
             if(mInformation.mIcon != null){
                 holder.contactPicture.setImageBitmap(mInformation.mIcon);
             }
-            holder.mInformationName.setText(mInformation.mName+"hghghhgh");
-            holder.mInformationTitle.setText(mContext.getString(R.string.nofiticafion_title));
+            if (mInformation.mRequest == DatabaseUtil.Information.REQUEST_CONFIRMED) {
+                holder.mInformationConfirmed.setText(mInformation.mName);
+                holder.mInformationTitle.setText(mContext.getString(R.string.information_title_confirmed));
+                holder.mInformationConfirm.setVisibility(View.GONE);
+            } else {
+                holder.mInformationConfirmed.setVisibility(View.GONE);
+                holder.mInformationTitle.setText(mContext.getString(R.string.information_title_confirm));
+                holder.mInformationConfirm.setText(mInformation.mName);
+            }
             holder.informationData.setText(updateRelativeTime(mInformation.mTime));
         }
 

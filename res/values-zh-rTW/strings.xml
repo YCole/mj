@@ -346,5 +346,8 @@
   <string name="operation_successed">"操作成功"</string>
   <string name="operation_failed">"操作失敗"</string>
   <string name="setting_head_as_gallery">正在設定頭像</string>
+  <string name="beauty_mirror_gallery">魔镜相册</string>
+  <string name="get_more">点击查看更多</string>
+  <string name="null_photo_remind">使用魔镜拍照,可以实时同步到手机本地 快去试试吧~</string>
   <!--cole-->
 </resources>

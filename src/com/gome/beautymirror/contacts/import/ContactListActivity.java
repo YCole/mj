@@ -48,6 +48,7 @@ import com.gome.beautymirror.activities.ContactDetailsActivity;
 import com.gome.beautymirror.contacts.StrangerActivity;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.DataThread;
+import com.gome.beautymirror.activities.BaseStatusBarActivity;
 
 import gome.beautymirror.ui.MyToast;
 import gome.beautymirror.ui.blurdialog.BlurDialog;
@@ -56,7 +57,7 @@ import gome.beautymirror.ui.blurdialog.BlurDialog;
  * 联系人选择
  */
 
-public class ContactListActivity extends Activity implements View.OnClickListener{
+public class ContactListActivity extends BaseStatusBarActivity implements View.OnClickListener{
 
     private RecyclerView mRecyclerView;
     private ProgressBar mProgressBar;
@@ -76,7 +77,6 @@ public class ContactListActivity extends Activity implements View.OnClickListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        transportStatus(this);
         setContentView(R.layout.activity_contact_list);
         initView();
         initData();
@@ -141,18 +141,6 @@ public class ContactListActivity extends Activity implements View.OnClickListene
             }
         });
 
-    }
-
-    private void transportStatus(Activity context){
-        context.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        Window window = context.getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        context.getWindow().setStatusBarColor(Color.TRANSPARENT);
     }
 
     private void initView() {
@@ -230,7 +218,7 @@ public class ContactListActivity extends Activity implements View.OnClickListene
 
     private void searchForPhoneNumber(){
         String searchText = mSearchNumBox.getText().toString();
-        if(DataService.instance().isAccount(searchText)) {
+        if(DataService.instance().matchAccount(searchText)) {
             Toast.makeText(ContactListActivity.this, "Account is fail", Toast.LENGTH_SHORT).show();
         } else {
             DataService.instance().queryPeople(searchText, new Handler() {

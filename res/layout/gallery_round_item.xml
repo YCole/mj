@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+
+    <com.gome.beautymirror.gallery.FilletImageView
+        android:id="@+id/MyImageView"
+        xmlns:chen="http://schemas.android.com/apk/res/com.gome.beautymirror"
+        android:layout_width="81dp"
+        android:layout_height="81dp"
+        android:layout_marginLeft="5dp"
+        android:scaleType="fitXY"
+        chen:angle="10" />
+
+
+    <ImageView
+        android:id="@+id/vedio_play"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginLeft="5dp"
+        android:src="@drawable/ic_gallery_play"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:scaleType="fitXY" />
+
+</FrameLayout>

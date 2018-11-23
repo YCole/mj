@@ -43,6 +43,7 @@ import org.linphone.core.ChatRoom;
 
 import cole.activities.AboutActivity;
 import cole.activities.CropActivity;
+import cole.activities.MyDeviceActivity;
 import cole.activities.PersonalInformationActivity;
 import cole.view.MyActionBar;
 import cole.view.MyOneLineView;

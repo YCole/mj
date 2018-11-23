@@ -31,12 +31,10 @@ public class RoundImageView extends ImageView {
     private int defaultHeight = 0;
     private int defaultRadius = 13;
 
-    private boolean mIsCircle = true;
     //构造方法，参数上下文
-    public RoundImageView(Context context,boolean isCricle) {
+    public RoundImageView(Context context) {
         super(context);
         mContext = context;
-        mIsCircle = isCricle;
     }
 
     public RoundImageView(Context context, AttributeSet attrs) {
@@ -61,10 +59,9 @@ public class RoundImageView extends ImageView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if(mIsCircle){
-            Drawable drawable = getDrawable();
-            if (drawable == null) {
-                return;
+        Drawable drawable = getDrawable();
+        if (drawable == null) {
+            return;
             }
             if (getWidth() == 0 || getHeight() == 0) {
                 return;
@@ -88,50 +85,24 @@ public class RoundImageView extends ImageView {
             }
             int radius = 0;
 
-            if (mBorderInsideColor != defaultColor && mBorderOutsideColor != defaultColor) {// 定义画两个边框，分别为外圆边框和内圆边框
-                radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - 2 * mBorderThickness;
-                // 画内圆
-                drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderInsideColor);
-                // 画外圆
-                drawCircleBorder(canvas, radius + mBorderThickness + mBorderThickness / 2, mBorderOutsideColor);
-            } else if (mBorderInsideColor != defaultColor && mBorderOutsideColor == defaultColor) {// 定义画一个边框
-                radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - mBorderThickness;
-                drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderInsideColor);
-            } else if (mBorderInsideColor == defaultColor && mBorderOutsideColor != defaultColor) {// 定义画一个边框
-                radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - mBorderThickness;
-                drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderOutsideColor);
-            } else {// 没有边框
-                radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2;
-            }
-            Bitmap roundBitmap = getCroppedRoundBitmap(bitmap, radius);
-            canvas.drawBitmap(roundBitmap, defaultWidth / 2 - radius, defaultHeight / 2 - radius, null);
-        }else {
-            defaultRadius = (int)dpToPx(mContext,13);
-            int minWidth = defaultRadius*2;
-            int minHeight = defaultRadius*2;
-            int radianWidth = (int)dpToPx(mContext,338);
-            int radianHeight = (int)dpToPx(mContext,334);
-            if (radianWidth >= minWidth && 334 > minHeight) {
-                Path path = new Path();
-                //四个角：右上，右下，左下，左上
-                path.moveTo(defaultRadius, 0);
-                path.lineTo(radianWidth - defaultRadius, 0);
-                path.quadTo(radianWidth, 0, radianWidth, defaultRadius);
-
-                path.lineTo(radianWidth, radianHeight - defaultRadius);
-                path.quadTo(radianWidth, radianHeight, radianWidth - defaultRadius, radianHeight);
-
-                path.lineTo(defaultRadius, radianHeight);
-                path.quadTo(0, radianHeight, 0, radianHeight - defaultRadius);
-
-                path.lineTo(0, defaultRadius);
-                path.quadTo(0, 0, defaultRadius, 0);
-
-                canvas.clipPath(path);
-            }
-            super.onDraw(canvas);
-
+        if (mBorderInsideColor != defaultColor && mBorderOutsideColor != defaultColor) {// 定义画两个边框，分别为外圆边框和内圆边框
+            radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - 2 * mBorderThickness;
+            // 画内圆
+            drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderInsideColor);
+            // 画外圆
+            drawCircleBorder(canvas, radius + mBorderThickness + mBorderThickness / 2, mBorderOutsideColor);
+        } else if (mBorderInsideColor != defaultColor && mBorderOutsideColor == defaultColor) {// 定义画一个边框
+            radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - mBorderThickness;
+            drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderInsideColor);
+        } else if (mBorderInsideColor == defaultColor && mBorderOutsideColor != defaultColor) {// 定义画一个边框
+            radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2 - mBorderThickness;
+            drawCircleBorder(canvas, radius + mBorderThickness / 2, mBorderOutsideColor);
+        } else {// 没有边框
+            radius = (defaultWidth < defaultHeight ? defaultWidth : defaultHeight) / 2;
         }
+        Bitmap roundBitmap = getCroppedRoundBitmap(bitmap, radius);
+        canvas.drawBitmap(roundBitmap, defaultWidth / 2 - radius, defaultHeight / 2 - radius, null);
+
     }
 
     private static float dpToPx(Context context, int dp) {

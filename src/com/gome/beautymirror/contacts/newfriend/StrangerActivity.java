@@ -1,14 +1,10 @@
 package com.gome.beautymirror.contacts;
-import android.app.Activity;;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,27 +19,19 @@ import com.gome.beautymirror.R;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.DataThread;
 
+import com.gome.beautymirror.activities.BaseStatusBarActivity;
 import gome.beautymirror.ui.MyToast;
 import gome.beautymirror.ui.blurdialog.BlurDialog;
 
-public class StrangerActivity extends Activity {
+public class StrangerActivity extends BaseStatusBarActivity {
     TextView mAccount;
-    Button mAddFriend;
+    Button mAddFriend,mWaitFriend;
     ImageView mContactPicture, mBtBack;
     String account;
     LinearLayout mSearchRoot, mActionBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        Window window =getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.stranger_detail);
         String name=getIntent().getStringExtra("NAME");
         account =getIntent().getStringExtra("ACCOUNT");
@@ -51,6 +39,7 @@ public class StrangerActivity extends Activity {
 
         mAccount=findViewById(R.id.account);
         mAddFriend=findViewById(R.id.add_friend);
+        mWaitFriend=findViewById(R.id.wait_friend);
         mContactPicture=findViewById(R.id.contact_picture);
 
         mSearchRoot = findViewById(R.id.search_root);
@@ -106,6 +95,9 @@ public class StrangerActivity extends Activity {
                                     JSONObject obj = (JSONObject) msg.obj;
                                     if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                                         MyToast.showToast(StrangerActivity.this,getResources().getString(R.string.send_add_friend_request) , Toast.LENGTH_SHORT);
+                                        mAddFriend.setVisibility(View.GONE);
+                                        mWaitFriend.setVisibility(View.VISIBLE);
+                                        mHandler.sendEmptyMessageDelayed(1,1000*60);
                                     } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
                                         MyToast.showToast(StrangerActivity.this,obj.getString(DataThread.RESULT_MSG) , Toast.LENGTH_SHORT);
                                     } else {
@@ -122,6 +114,16 @@ public class StrangerActivity extends Activity {
             }
         }.show();
     }
+
+    private Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            if(msg.what == 1){
+                mAddFriend.setVisibility(View.VISIBLE);
+                mWaitFriend.setVisibility(View.GONE);
+            }
+        }
+    };
 
 }
 

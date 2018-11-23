@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
@@ -23,8 +25,8 @@ import cole.common.P;
 import cole.utils.SaveUtils;
 import cole.view.MyActionBar;
 import com.gome.beautymirror.activities.BeautyMirrorLauncherActivity;
-
-
+import com.gome.beautymirror.data.DataService;
+import com.gome.beautymirror.data.DataThread;
 
 public class BindDeviceActivity extends BaseActivity {
 
@@ -35,6 +37,7 @@ public class BindDeviceActivity extends BaseActivity {
     private TextView mDevicesId;
     private Button mBindDeviceId;
     private String mDeviceId;
+    private String mDeviceKey;
 
     @Override
     protected void loadXml() {
@@ -102,52 +105,21 @@ public class BindDeviceActivity extends BaseActivity {
      * 绑定设备请求
      */
     private void userGotoBindDevice() {
-
-        String phoneNum = SaveUtils.readUser(this, "username");
-        String password = SaveUtils.readUser(this, "password");
-        if (TextUtils.isEmpty(phoneNum) | TextUtils.isEmpty(password) | TextUtils.isEmpty(mDeviceId)) {
-            shortToast("绑定设备用户密码为空");
-        } else {
-
-            String strUrl = P.PROPOTOL + "://" + P.IP + ":" + P.PORT + P.CKECK_USE +
-                    "&vname=" + phoneNum + "&passwd=" + password + "&deviceid" + mDeviceId;
-            Log.i("info", strUrl + "*******USENAME");
-          /*  HttpUtils.get(strUrl, new AsyncHttpResponseHandler() {
-
+        if (DataService.isReady()) {
+            DataService.instance().bindDevice(null, mDeviceId, mDeviceKey, null, new Handler() {
                 @Override
-                public void onSuccess(int arg0, Header[] arg1, byte[] arg2) {
-                    // TODO Auto-generated method stub
-                    try {
-                        JSONObject obj = new JSONObject(new String(arg2));
-                        if (obj.getString("result").equals("0")) {
-                            shortToast("绑定成功");
-                            Intent intent = new Intent(BindDeviceActivity.this, LoginActivity.class);
-                            startActivity(intent);
-                            SaveUtils.writeUser(BindDeviceActivity.this, "username", mDevicesId.getText().toString().trim());
-
-                            //多用户管理时候需要数据库了，储存用户信息，管理区别账号资料
-                            //userinfo sqlite3 数据库管理
-
-
-
-                        } else {
-                            shortToast("绑定失败");
-                        }
-
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                public void handleMessage(Message msg) {
+                    if (DataService.checkResult(msg)) {
+                        shortToast("bindDevice: success");
+                        finish();
+                    } else {
+                        shortToast("bindDevice: error");
                     }
                 }
-
-                @Override
-                public void onFailure(int arg0, Header[] arg1, byte[] arg2, Throwable arg3) {
-                    // TODO Auto-generated method stub
-                    shortToast("检测网络");
-                }
-            });*/
+            }, 0);
+        } else {
+            shortToast("DataService not ready");
         }
-
     }
 
     @Override
@@ -161,8 +133,32 @@ public class BindDeviceActivity extends BaseActivity {
                 //将扫描出的信息显示出来
                 mDevicesId.setVisibility(View.VISIBLE);
                 mDevicesId.setText(scanResult);
-
-                mDeviceId = scanResult;
+                try{
+                    mDeviceId = Integer.parseInt(scanResult) + "";
+                    Log.d("BindDeviceActivity", "mDeviceId = " + mDeviceId);
+                    if (DataService.isReady()) {
+                        DataService.instance().requestKey(mDeviceId, new Handler() {
+                            @Override
+                            public void handleMessage(Message msg) {
+                                try {
+                                    JSONObject obj = (JSONObject) msg.obj;
+                                    if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                                        mDeviceKey = obj.getString("deviceKey");
+                                        mDevicesId.setText("You can bind the Device:" + mDeviceId);
+                                    } else {
+                                        shortToast("requestKey: error");
+                                    }
+                                } catch (JSONException e) {
+                                    shortToast("requestKey: JSONException");
+                                }
+                            }
+                        }, 0);
+                    } else {
+                        shortToast("DataService not ready");
+                    }
+                } catch(NumberFormatException e) {
+                    shortToast("id error");
+                }
             } else {
                 shortToast("扫码失败");
                 mDevicesId.setVisibility(View.INVISIBLE);

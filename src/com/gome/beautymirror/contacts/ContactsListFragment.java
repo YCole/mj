@@ -64,6 +64,7 @@ import java.util.concurrent.Executors;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 
+import cole.activities.MyDeviceActivity;
 import gome.beautymirror.contacts.newfriend.RequestInfo;
 import gome.beautymirror.contacts.newfriend.SearchContactsAdapter;
 
@@ -89,7 +90,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     private SelectableHelper mSelectionHelper;
     private ContactsListAdapter mContactAdapter;
     private SearchContactsAdapter mSearchAdapter;
-    private RelativeLayout mRlNewFriend;
+    private RelativeLayout mRlNewFriend,mRlMyDevice;
     private TextView mRequestNum;
     ArrayList<RequestInfo> mData = new ArrayList();
 
@@ -140,6 +141,13 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             @Override
             public void onClick(View v) {
                 gotoNewFriendActivity();
+            }
+        });
+        mRlMyDevice = view.findViewById(R.id.rl_my_device);
+        mRlMyDevice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gotoMyDeviceDetailActivity();
             }
         });
 
@@ -407,7 +415,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             if(isNewFriend){
                gotoNewFriendActivity();
             }else if(isMyDevice){
-
+                gotoMyDeviceDetailActivity();
             }
             return;
         }
@@ -544,6 +552,11 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     private void gotoNewFriendActivity(){
         Intent mIntent= new Intent(getActivity(), com.gome.beautymirror.contacts.NewFriendActivity.class);
         mIntent.putParcelableArrayListExtra("FRIEND_REQUEST",mData);
+        startActivity(mIntent);
+    }
+
+    private void gotoMyDeviceDetailActivity(){
+        Intent mIntent= new Intent(getActivity(),  com.gome.beautymirror.activities.MyDeviceDetailsActivity.class);
         startActivity(mIntent);
     }
 }

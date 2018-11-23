@@ -32,7 +32,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -41,8 +40,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.text.Html;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -54,6 +51,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -66,35 +64,29 @@ import com.gome.beautymirror.LinphonePreferences;
 import com.gome.beautymirror.LinphoneService;
 import com.gome.beautymirror.LinphoneUtils;
 import com.gome.beautymirror.R;
-import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.activities.BeautyMirrorGenericActivity;
 import com.gome.beautymirror.contacts.ContactsManager;
 import com.gome.beautymirror.contacts.LinphoneContact;
+import com.gome.beautymirror.data.provider.DatabaseUtil;
+
 import org.linphone.core.Address;
-import org.linphone.core.AddressFamily;
 import org.linphone.core.Call;
 import org.linphone.core.Call.State;
-import org.linphone.core.CallListenerStub;
 import org.linphone.core.CallParams;
-import org.linphone.core.CallStats;
 import org.linphone.core.ChatMessage;
 import org.linphone.core.ChatRoom;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
-import org.linphone.core.MediaEncryption;
-import org.linphone.core.PayloadType;
 import org.linphone.core.Player;
-import org.linphone.core.StreamType;
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.video.capture.hwconf.AndroidCameraConfiguration;
 import com.gome.beautymirror.receivers.BluetoothManager;
 
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+
+import gome.beautymirror.ui.CallToast;
 
 public class CallActivity extends BeautyMirrorGenericActivity implements OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private final static int SECONDS_BEFORE_HIDING_CONTROLS = 5000;
@@ -107,14 +99,13 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
 
     private Handler mControlsHandler = new Handler();
     private Runnable mControls;
-    private ImageView switchCamera;
-    private TextView mVedioAudioTitle,mSwitchCameraTitle;
+    private ImageView switchCamera, switchCameraIcon, micro, microIcon;
     private RelativeLayout topLayout;
-    private ImageView hangUp, video, micro, speaker, options, addCall, transfer, conference, conferenceStatus;
+    private ImageView hangUp, video, audio, speaker, options, transfer, conference, conferenceStatus;
     private ImageView mContactPicture;
     private TextView mContactName;
     private LinearLayout mContactInfo;
-    private ImageView audioRoute, routeSpeaker, routeEarpiece, routeBluetooth, menu, chat;
+    private ImageView routeSpeaker, routeEarpiece,menu, chat;
     private ProgressBar videoProgress;
     private CallAudioFragment audioCallFragment;
     private CallVideoFragment videoCallFragment;
@@ -134,8 +125,12 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
     private CoreListenerStub mListener;
     private HashMap<String, String> mEncoderTexts;
     private HashMap<String, String> mDecoderTexts;
+    private LinearLayout mLlTurnToVedio,mLlSwitchCamera,mLlTurnToAudio;
+    private FrameLayout mCallInfo;
 
     private boolean oldIsSpeakerEnabled = false;
+
+    private boolean isSwitchCamera;
 
     public static CallActivity instance() {
         return instance;
@@ -326,77 +321,65 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
         mContactName = findViewById(R.id.contact_name);
         mContactInfo = findViewById(R.id.contact_info);
 
+        mLlTurnToVedio = findViewById(R.id.ll_turntovedio);
+        mLlSwitchCamera = findViewById(R.id.ll_switchCamera);
+        mLlTurnToAudio = findViewById(R.id.ll_turntoaudio);
+        mCallInfo = findViewById(R.id.call_info);
+
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        mCallInfo.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
+
         //TopBar
         video = findViewById(R.id.video);
         video.setOnClickListener(this);
         enabledVideoButton(false);
 
+        audio= findViewById(R.id.audio);
+        audio.setOnClickListener(this);
+
         videoProgress = findViewById(R.id.video_in_progress);
         videoProgress.setVisibility(View.GONE);
 
         micro = findViewById(R.id.micro);
+        microIcon = findViewById(R.id.micro_icon);
         micro.setOnClickListener(this);
 
         speaker = findViewById(R.id.speaker);
         speaker.setOnClickListener(this);
-
-        options = findViewById(R.id.options);
-        options.setOnClickListener(this);
-        options.setEnabled(false);
 
         //BottonBar
         hangUp = findViewById(R.id.hang_up);
         hangUp.setOnClickListener(this);
 
         //Options
-        addCall = findViewById(R.id.add_call);
-        addCall.setOnClickListener(this);
-        addCall.setEnabled(false);
-
         transfer = findViewById(R.id.transfer);
         transfer.setOnClickListener(this);
         transfer.setEnabled(false);
 
-        conference = findViewById(R.id.conference);
-        conference.setEnabled(false);
-        conference.setOnClickListener(this);
-
         try {
-            audioRoute = findViewById(R.id.audio_route);
-            audioRoute.setOnClickListener(this);
             routeSpeaker = findViewById(R.id.route_speaker);
             routeSpeaker.setOnClickListener(this);
             routeEarpiece = findViewById(R.id.route_earpiece);
             routeEarpiece.setOnClickListener(this);
-            routeBluetooth = findViewById(R.id.route_bluetooth);
-            routeBluetooth.setOnClickListener(this);
         } catch (NullPointerException npe) {
             Log.e("Bluetooth: Audio routes menu disabled on tablets for now (1)");
         }
 
         switchCamera = findViewById(R.id.switchCamera);
+        switchCameraIcon = findViewById(R.id.switchCamera_icon);
         switchCamera.setOnClickListener(this);
-
-        mSwitchCameraTitle = findViewById(R.id.switchCameraTitle);
-        mVedioAudioTitle = findViewById(R.id.videoAudioTitle);
 
         mControlsLayout = findViewById(R.id.menu);
 
-        if (!isTransferAllowed) {
-            addCall.setBackgroundResource(R.drawable.options_add_call);
-        }
-
         if (BluetoothManager.getInstance().isBluetoothHeadsetAvailable()) {
             try {
-                audioRoute.setVisibility(View.VISIBLE);
                 speaker.setVisibility(View.GONE);
             } catch (NullPointerException npe) {
                 Log.e("Bluetooth: Audio routes menu disabled on tablets for now (2)");
             }
         } else {
             try {
-                audioRoute.setVisibility(View.GONE);
-                speaker.setVisibility(View.VISIBLE);
+               // speaker.setVisibility(View.VISIBLE);
             } catch (NullPointerException npe) {
                 Log.e("Bluetooth: Audio routes menu disabled on tablets for now (3)");
             }
@@ -468,17 +451,17 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
         } else {
             if (video.isEnabled()) {
                 if (isVideoEnabled(LinphoneManager.getLc().getCurrentCall())) {
-                    video.setImageResource(R.drawable.camera_selected);
+                  //  video.setImageResource(R.drawable.camera_selected);
                     videoProgress.setVisibility(View.INVISIBLE);
                 } else {
-                    video.setImageResource(R.drawable.camera_button);
+                  //  video.setImageResource(R.drawable.camera_button);
                 }
             } else {
-                video.setImageResource(R.drawable.camera_button);
+              //  video.setImageResource(R.drawable.camera_button);
             }
         }
         if (getPackageManager().checkPermission(Manifest.permission.CAMERA, getPackageName()) != PackageManager.PERMISSION_GRANTED) {
-            video.setImageResource(R.drawable.camera_button);
+         //   video.setImageResource(R.drawable.camera_button);
         }
 
         if (isSpeakerEnabled) {
@@ -491,9 +474,11 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
             isMicMuted = true;
         }
         if (isMicMuted) {
-            micro.setImageResource(R.drawable.micro_selected);
+            micro.setBackground(getResources().getDrawable(R.drawable.bg_mute_switchcamera_selected));
+            microIcon.setImageResource(R.drawable.ic_mute_selected);
         } else {
-            micro.setImageResource(R.drawable.micro_default);
+            micro.setBackground(getResources().getDrawable(R.drawable.bg_mute_switchcamera_default));
+            microIcon.setImageResource(R.drawable.ic_mute_default);
         }
 
         try {
@@ -501,17 +486,14 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
             if (BluetoothManager.getInstance().isUsingBluetoothAudioRoute()) {
                 isSpeakerEnabled = false; // We need this if isSpeakerEnabled wasn't set correctly
                 routeEarpiece.setImageResource(R.drawable.route_earpiece);
-                routeBluetooth.setImageResource(R.drawable.route_bluetooth_selected);
                 return;
             } else {
                 routeEarpiece.setImageResource(R.drawable.route_earpiece_selected);
-                routeBluetooth.setImageResource(R.drawable.route_bluetooth);
             }
 
             if (isSpeakerEnabled) {
                 routeSpeaker.setImageResource(R.drawable.route_speaker_selected);
                 routeEarpiece.setImageResource(R.drawable.route_earpiece);
-                routeBluetooth.setImageResource(R.drawable.route_bluetooth);
             }
         } catch (NullPointerException npe) {
             Log.e("Bluetooth: Audio routes menu disabled on tablets for now (4)");
@@ -528,16 +510,6 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
         //Enabled transfer button
         if (isTransferAllowed && !LinphoneManager.getLc().soundResourcesLocked())
             enabledTransferButton(true);
-
-        //Enable conference button
-        if (LinphoneManager.getLc().getCallsNb() > 1 && LinphoneManager.getLc().getCallsNb() > confsize && !LinphoneManager.getLc().soundResourcesLocked()) {
-            enabledConferenceButton(true);
-        } else {
-            enabledConferenceButton(false);
-        }
-
-        addCall.setEnabled(LinphoneManager.getLc().getCallsNb() < LinphoneManager.getLc().getMaxCalls() && !LinphoneManager.getLc().soundResourcesLocked());
-        options.setEnabled(!getResources().getBoolean(R.bool.disable_options_in_call) && (addCall.isEnabled() || transfer.isEnabled()));
 
         if (LinphoneManager.getLc().getCurrentCall() != null && LinphonePreferences.instance().isVideoEnabled() && !LinphoneManager.getLc().getCurrentCall().mediaInProgress()) {
             enabledVideoButton(true);
@@ -569,6 +541,8 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
                 checkAndRequestPermission(Manifest.permission.CAMERA, PERMISSIONS_ENABLED_CAMERA);
 
             }
+        } else if(id == R.id.audio){
+            disableVideo(false);
         } else if (id == R.id.micro) {
             int recordAudio = getPackageManager().checkPermission(Manifest.permission.RECORD_AUDIO, getPackageName());
             Log.i("[Permission] Record audio permission is " + (recordAudio == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
@@ -580,42 +554,31 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
             }
         } else if (id == R.id.speaker) {
             toggleSpeaker();
-        } else if (id == R.id.add_call) {
-            goBackToDialer();
         } else if (id == R.id.hang_up) {
             hangUp();
-        } else if (id == R.id.conference) {
-            enterConference();
-            hideOrDisplayCallOptions();
         } else if (id == R.id.switchCamera) {
             if (videoCallFragment != null) {
                 videoCallFragment.switchCamera();
             }
+            isSwitchCamera = ! isSwitchCamera;
+            if(isSwitchCamera){
+                switchCamera.setBackground(getDrawable(R.drawable.bg_mute_switchcamera_selected));
+                switchCameraIcon.setImageResource(R.drawable.ic_switchcamera_selected);
+            }else {
+                switchCamera.setBackground(getDrawable(R.drawable.bg_mute_switchcamera_default));
+                switchCameraIcon.setImageResource(R.drawable.ic_switchcamera_default);
+            }
         } else if (id == R.id.transfer) {
             goBackToDialerAndDisplayTransferButton();
-        } else if (id == R.id.options) {
-            hideOrDisplayCallOptions();
-        } else if (id == R.id.audio_route) {
-            hideOrDisplayAudioRoutes();
-        } else if (id == R.id.route_bluetooth) {
-            if (BluetoothManager.getInstance().routeAudioToBluetooth()) {
-                isSpeakerEnabled = false;
-                routeBluetooth.setImageResource(R.drawable.route_bluetooth_selected);
-                routeSpeaker.setImageResource(R.drawable.route_speaker);
-                routeEarpiece.setImageResource(R.drawable.route_earpiece);
-            }
-            hideOrDisplayAudioRoutes();
         } else if (id == R.id.route_earpiece) {
             LinphoneManager.getInstance().routeAudioToReceiver();
             isSpeakerEnabled = false;
-            routeBluetooth.setImageResource(R.drawable.route_bluetooth);
             routeSpeaker.setImageResource(R.drawable.route_speaker);
             routeEarpiece.setImageResource(R.drawable.route_earpiece_selected);
             hideOrDisplayAudioRoutes();
         } else if (id == R.id.route_speaker) {
             LinphoneManager.getInstance().routeAudioToSpeaker();
             isSpeakerEnabled = true;
-            routeBluetooth.setImageResource(R.drawable.route_bluetooth);
             routeSpeaker.setImageResource(R.drawable.route_speaker_selected);
             routeEarpiece.setImageResource(R.drawable.route_earpiece);
             hideOrDisplayAudioRoutes();
@@ -639,14 +602,6 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
             transfer.setEnabled(true);
         } else {
             transfer.setEnabled(false);
-        }
-    }
-
-    private void enabledConferenceButton(boolean enabled) {
-        if (enabled) {
-            conference.setEnabled(true);
-        } else {
-            conference.setEnabled(false);
         }
     }
 
@@ -734,14 +689,15 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
 
     private void displayAudioCall() {
         mControlsLayout.setVisibility(View.VISIBLE);
-        switchCamera.setVisibility(View.GONE);
-        mSwitchCameraTitle.setVisibility(View.GONE);
-        mVedioAudioTitle.setText(getString(R.string.switch_video));
         mContactInfo.setVisibility(View.VISIBLE);
+        mLlSwitchCamera.setVisibility(View.GONE);
+        mLlTurnToVedio.setVisibility(View.VISIBLE);
+        mLlTurnToAudio.setVisibility(View.GONE);
     }
 
     private void replaceFragmentVideoByAudio() {
-        Toast.makeText(this,R.string.is_audio,Toast.LENGTH_LONG).show();
+       // Toast.makeText(this,R.string.is_audio,Toast.LENGTH_LONG).show();
+        CallToast.showToast(this,getString(R.string.is_audio),CallToast.LENGTH_LONG);
         audioCallFragment = new CallAudioFragment();
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction.replace(R.id.fragmentContainer, audioCallFragment);
@@ -752,7 +708,7 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
     }
 
     private void replaceFragmentAudioByVideo() {
-        Toast.makeText(this,R.string.is_video,Toast.LENGTH_LONG).show();
+        CallToast.showToast(this,getString(R.string.is_video),CallToast.LENGTH_LONG);
 //      Hiding controls to let displayVideoCallControlsIfHidden add them plus the callback
         videoCallFragment = new CallVideoFragment();
 
@@ -770,10 +726,13 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
         isMicMuted = !isMicMuted;
         lc.enableMic(!isMicMuted);
         if (isMicMuted) {
-            micro.setImageResource(R.drawable.micro_selected);
+            micro.setBackground(getResources().getDrawable(R.drawable.bg_mute_switchcamera_selected));
+            microIcon.setImageResource(R.drawable.ic_mute_selected);
         } else {
-            micro.setImageResource(R.drawable.micro_default);
+            micro.setBackground(getResources().getDrawable(R.drawable.bg_mute_switchcamera_default));
+            microIcon.setImageResource(R.drawable.ic_mute_default);
         }
+
     }
 
     protected void toggleSpeaker() {
@@ -812,15 +771,17 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
         if (display) {
             mControlsLayout.setVisibility(View.VISIBLE);
             if (cameraNumber > 1) {
-                switchCamera.setVisibility(View.VISIBLE);
-                mSwitchCameraTitle.setVisibility(View.VISIBLE);
-                mVedioAudioTitle.setText(getString(R.string.switch_audio));
+                mLlSwitchCamera.setVisibility(View.VISIBLE);
+                mLlTurnToVedio.setVisibility(View.GONE);
+                mLlTurnToAudio.setVisibility(View.VISIBLE);
             }
         } else {
             hideStatusBar();
             mControlsLayout.setVisibility(View.GONE);
-            switchCamera.setVisibility(View.GONE);
-            mSwitchCameraTitle.setVisibility(View.GONE);
+            mLlSwitchCamera.setVisibility(View.GONE);
+            mLlTurnToVedio.setVisibility(View.VISIBLE);
+            mLlTurnToAudio.setVisibility(View.GONE);
+
         }
     }
 
@@ -847,10 +808,7 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
                 public void run() {
                     video.setEnabled(true);
                     transfer.setVisibility(View.INVISIBLE);
-                    addCall.setVisibility(View.INVISIBLE);
-                    conference.setVisibility(View.INVISIBLE);
                     displayVideoCall(false);
-                    options.setImageResource(R.drawable.options_default);
                 }
             }, SECONDS_BEFORE_HIDING_CONTROLS);
         }
@@ -866,40 +824,11 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
     private void hideOrDisplayAudioRoutes() {
         if (routeSpeaker.getVisibility() == View.VISIBLE) {
             routeSpeaker.setVisibility(View.INVISIBLE);
-            routeBluetooth.setVisibility(View.INVISIBLE);
             routeEarpiece.setVisibility(View.INVISIBLE);
         } else {
             routeSpeaker.setVisibility(View.VISIBLE);
-            routeBluetooth.setVisibility(View.VISIBLE);
             routeEarpiece.setVisibility(View.VISIBLE);
         }
-    }
-
-    private void hideOrDisplayCallOptions() {
-        //Hide options
-        if (addCall.getVisibility() == View.VISIBLE) {
-            options.setImageResource(R.drawable.options_default);
-            if (isTransferAllowed) {
-                transfer.setVisibility(View.INVISIBLE);
-            }
-            addCall.setVisibility(View.INVISIBLE);
-            conference.setVisibility(View.INVISIBLE);
-        } else { //Display options
-            if (isTransferAllowed) {
-                transfer.setVisibility(View.VISIBLE);
-            }
-            addCall.setVisibility(View.VISIBLE);
-            conference.setVisibility(View.VISIBLE);
-            options.setImageResource(R.drawable.options_selected);
-            transfer.setEnabled(LinphoneManager.getLc().getCurrentCall() != null);
-        }
-    }
-
-    public void goBackToDialer() {
-        Intent intent = new Intent();
-        intent.putExtra("Transfer", false);
-        setResult(Activity.RESULT_FIRST_USER, intent);
-        finish();
     }
 
     private void goBackToDialerAndDisplayTransferButton() {
@@ -1119,67 +1048,50 @@ public class CallActivity extends BeautyMirrorGenericActivity implements OnClick
 
     //CALL INFORMATION
     private void displayCurrentCall(Call call) {
-        setBgContactPicture(topLayout, call);
         setContactInformation(mContactPicture,mContactName,call);
         registerCallDurationTimer(null, call);
     }
 
-    private void setBgContactPicture( RelativeLayout layout, Call call) {
-        LinphoneContact lContact = getContactFromAccount(call);
-        if (lContact == null) {
-           // layout.setBackgroundDrawable(new BitmapDrawable(ContactsManager.getInstance().getDefaultAvatarBitmap()));
-        } else {
-            LinphoneUtils.setBgPictureFromUri(layout.getContext(), layout, lContact.getPhotoUri(), lContact.getThumbnailUri());
-        }
-
-    }
-
-    public LinphoneContact getContactFromAccount(Call call){
-        String lAddress = call.getRemoteAddress().asStringUriOnly();
-        Cursor cursor ;
-        if(call.getDir() == Call.Dir.Incoming){
-            lAddress = lAddress.substring(4,lAddress.length()-5);
-        }else {
-            lAddress = lAddress.substring(4);
-        }
-        cursor = com.gome.beautymirror.data.DataService.instance().getFriendForSip(lAddress);
-        String account="";
-        while (cursor != null && cursor.moveToNext()) {
-            account = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_ACCOUNT);
-        }
-        return ContactsManager.getInstance().getContactFromAccount(account);
-    }
-
     public void setContactInformation(ImageView contactPicture, TextView contactName, Call call) {
-        LinphoneContact lContact = getContactFromAccount(call);
-        if (lContact == null) {
-            contactPicture.setImageBitmap(ContactsManager.getInstance().getDefaultAvatarBitmap());
-        } else {
-            LinphoneUtils.setImagePictureFromUri(contactPicture.getContext(), contactPicture, lContact.getPhotoUri(), lContact.getThumbnailUri());
-            contactName.setText(lContact.getRemarkName() == null ? lContact.getFullName():lContact.getRemarkName());
-        }
-
-    }
-
-    private boolean displayCallStatusIconAndReturnCallPaused(LinearLayout callView, Call call) {
-        boolean isCallPaused, isInConference;
-        ImageView onCallStateChanged = callView.findViewById(R.id.call_pause);
-        onCallStateChanged.setTag(call);
-        onCallStateChanged.setOnClickListener(this);
-
-        if (call.getState() == State.Paused || call.getState() == State.PausedByRemote || call.getState() == State.Pausing) {
-            onCallStateChanged.setImageResource(R.drawable.pause);
-            isCallPaused = true;
-            isInConference = false;
-        } else if (call.getState() == State.OutgoingInit || call.getState() == State.OutgoingProgress || call.getState() == State.OutgoingRinging) {
-            isCallPaused = false;
-            isInConference = false;
-        } else {
-            isInConference = isConferenceRunning && call.getConference() != null;
-            isCallPaused = false;
-        }
-
-        return isCallPaused || isInConference;
+        byte[] icon = null;
+        String sip = LinphoneUtils.getAddressDisplayName(call.getRemoteAddress());
+        if (sip != null && !"".equals(sip)) {
+            Cursor cursor = com.gome.beautymirror.data.DataService.instance().getFriendForSip(sip);
+            String account = "";
+            String device = "";
+            if (cursor != null && cursor.moveToFirst()) {
+                account = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_ACCOUNT);
+                if (sip.equals(cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_DEVICE_SIP))) {
+                    device = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_ID);
+                }
+                icon = cursor.getBlob(com.gome.beautymirror.data.provider.DatabaseUtil.Friend.COLUMN_ICON);
+                if (icon != null) {
+                    contactPicture.setImageBitmap(com.gome.beautymirror.data.DataUtil.getImage(icon));
+                }
+                contactName.setText(account + " " + device);
+                LinphoneManager.getLc().setCallLogsFriend(account, device);
+            } else {
+                if (cursor != null) cursor.close();
+                cursor = com.gome.beautymirror.data.DataService.instance().getAccountForSip(sip);
+                if (cursor != null && cursor.moveToFirst()) {
+                    account = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_ACCOUNT);
+                    if (sip.equals(cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_DEVICE_SIP))) {
+                        device = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_ID);
+                    }
+                    icon = cursor.getBlob(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_ICON);
+                    if (icon != null) {
+                        contactPicture.setImageBitmap(com.gome.beautymirror.data.DataUtil.getImage(icon));
+                    }
+                    contactName.setText(account + " " + device);
+                    LinphoneManager.getLc().setCallLogsFriend(account, device);
+                } else {
+                    contactName.setText(LinphoneUtils.getAddressDisplayName(call.getRemoteAddress()));
+                    LinphoneManager.getLc().setCallLogsFriend(sip, device);
+                }
+            }
+            if (cursor != null) cursor.close();
+        } else
+            contactName.setText(LinphoneUtils.getAddressDisplayName(call.getRemoteAddress()));
     }
 
     private void registerCallDurationTimer(View v, Call call) {

@@ -19,6 +19,9 @@ import java.util.ArrayList;
 
 import com.gome.beautymirror.data.DataService;
 
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 public class RequestAdapter extends BaseAdapter {
 
     private LayoutInflater mInflater;
@@ -26,10 +29,19 @@ public class RequestAdapter extends BaseAdapter {
 
     private ArrayList<RequestInfo> mData = new ArrayList();
 
+    RequestOptions mRequestOptions;
+
+
     public RequestAdapter(Context context, ArrayList<RequestInfo> data) {
         this.mContext = context;
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
+
+        mRequestOptions = RequestOptions.circleCropTransform()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true);
+        mRequestOptions.placeholder(R.mipmap.ic_launcher)
+                .error(R.mipmap.ic_launcher);
     }
 
     @Override
@@ -53,7 +65,7 @@ public class RequestAdapter extends BaseAdapter {
         if (convertView == null) {
             holder = new ViewHolder();
             convertView = mInflater.inflate(R.layout.contact_friend_request_item, null);
-            holder.mAvatar=convertView.findViewById(R.id.iv_avatar);
+            holder.mAvatar = convertView.findViewById(R.id.iv_avatar);
             holder.mName = convertView.findViewById(R.id.tv_name);
             holder.mNumber = convertView.findViewById(R.id.tv_number);
             holder.mAccept = convertView.findViewById(R.id.accept);
@@ -72,18 +84,16 @@ public class RequestAdapter extends BaseAdapter {
 
 
     private void initView(final ViewHolder holder, final int position) {
-        if(mData.get(position).getName()==null || mData.get(position).getName().equals("")){
+        if (mData.get(position).getName() == null || mData.get(position).getName().equals("")) {
             holder.mName.setText(mData.get(position).getAccount());
-        }else{
+        } else {
             holder.mName.setText(mData.get(position).getName());
         }
         holder.mNumber.setText(mData.get(position).getMessage());
 
         Glide.with(mContext)
                 .load(mData.get(position).getAvatar())
-                .transform(new com.gome.beautymirror.contacts.GlideCircleTransform(mContext))
-                .placeholder(R.mipmap.ic_launcher)
-                .error(R.mipmap.ic_launcher)
+                .apply(mRequestOptions)
                 .into(holder.mAvatar);
 
         int mFlag = mData.get(position).getHandleFlag();
@@ -95,36 +105,36 @@ public class RequestAdapter extends BaseAdapter {
                 @Override
                 public void onClick(View v) {
                     DataService.instance().confirmProposer(null, mData.get(position).getAccount(), 1, new Handler() {
-                            @Override
-                            public void handleMessage(Message msg) {
-                                if (DataService.checkResult(msg)) {
-                                    holder.mAccept.setVisibility(View.GONE);
-                                    holder.mRefuse.setVisibility(View.GONE);
-                                    holder.mTvHandleResult.setVisibility(View.VISIBLE);
-                                    holder.mTvHandleResult.setText(mContext.getResources().getString(R.string.contact_accepted));
-                                } else {
-                                    Toast.makeText(mContext, "Fail", Toast.LENGTH_SHORT).show();
-                                }
+                        @Override
+                        public void handleMessage(Message msg) {
+                            if (DataService.checkResult(msg)) {
+                                holder.mAccept.setVisibility(View.GONE);
+                                holder.mRefuse.setVisibility(View.GONE);
+                                holder.mTvHandleResult.setVisibility(View.VISIBLE);
+                                holder.mTvHandleResult.setText(mContext.getResources().getString(R.string.contact_accepted));
+                            } else {
+                                Toast.makeText(mContext, "Fail", Toast.LENGTH_SHORT).show();
                             }
-                        }, 0);
+                        }
+                    }, 0);
                 }
             });
             holder.mRefuse.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     DataService.instance().confirmProposer(null, mData.get(position).getAccount(), 0, new Handler() {
-                            @Override
-                            public void handleMessage(Message msg) {
-                                if (DataService.checkResult(msg)) {
-                                    holder.mAccept.setVisibility(View.GONE);
-                                    holder.mRefuse.setVisibility(View.GONE);
-                                    holder.mTvHandleResult.setVisibility(View.VISIBLE);
-                                    holder.mTvHandleResult.setText(mContext.getResources().getString(R.string.contact_refused));
-                                } else {
-                                    Toast.makeText(mContext, "Fail", Toast.LENGTH_SHORT).show();
-                                }
+                        @Override
+                        public void handleMessage(Message msg) {
+                            if (DataService.checkResult(msg)) {
+                                holder.mAccept.setVisibility(View.GONE);
+                                holder.mRefuse.setVisibility(View.GONE);
+                                holder.mTvHandleResult.setVisibility(View.VISIBLE);
+                                holder.mTvHandleResult.setText(mContext.getResources().getString(R.string.contact_refused));
+                            } else {
+                                Toast.makeText(mContext, "Fail", Toast.LENGTH_SHORT).show();
                             }
-                        }, 0);
+                        }
+                    }, 0);
                 }
             });
         } else if (mFlag == 1) {

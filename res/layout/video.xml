@@ -10,9 +10,18 @@
         android:layout_width="match_parent"
         android:id="@+id/videoSurface" />
 
-    <SurfaceView
-        android:id="@+id/videoCaptureSurface"
+    <RelativeLayout
+        android:id="@+id/rl_captureSurface"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
+
+        <SurfaceView
+            android:id="@+id/videoCaptureSurface"
+            android:layout_width="75dp"
+            android:layout_height="137dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"/>
+    </RelativeLayout>
 
 </RelativeLayout>

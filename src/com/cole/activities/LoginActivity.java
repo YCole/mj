@@ -51,6 +51,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
     private RelativeLayout llBackground;
     private ImageView ivLogo;
+    private ImageView checkPassword;
     private TextView phoneOrUsers;
     private TextView showphoneOrUsersPass;
     private TextView wifiAgreement;
@@ -90,6 +91,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         llBackground = (RelativeLayout) findViewById(R.id.activity_login);
 //        ivLogo = (ImageView) findViewById(R.id.iv_school_logo);
         ivBack = (ImageView) findViewById(R.id.iv_back);
+        checkPassword = (ImageView)findViewById(R.id.check_password);
 
 
         mLoginRegister = (TextView) findViewById(R.id.tv_login_register);
@@ -118,6 +120,8 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
 
         mLogin.setOnClickListener(this);
+
+        checkPassword.setOnClickListener(this);
 
         inputName.setOnClickListener(this);
         inputPassword.setOnClickListener(this);
@@ -306,6 +310,15 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
                 startActivity(new Intent(LoginActivity.this, FindPasswordActivity.class));
                 break;
+            case R.id.check_password:
+                if (inputPassword.getInputType() == (InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD)){
+                    checkPassword.setImageResource(R.drawable.icon_check);
+                    inputPassword.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                }else{
+                    checkPassword.setImageResource(R.drawable.icon_conceal);
+                    inputPassword.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                }
+                break;
 
 
         }
@@ -373,6 +386,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                                 longToast("登陆成功");
                                 startActivity(new Intent(LoginActivity.this, BindDeviceActivity.class));
                                 finish();
+                                RigisterAndLoginMainActivity.quit();
                             } else if (object.get("resCode").equals("111")) {
                                 longToast("登陆失败");
                             } else if (object.get("resCode").equals("333")) {

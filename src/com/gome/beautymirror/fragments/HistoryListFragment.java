@@ -24,8 +24,6 @@ import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Message;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -37,27 +35,20 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import com.gome.beautymirror.LinphoneManager;
+import android.provider.Settings;
 import com.gome.beautymirror.LinphoneUtils;
 import com.gome.beautymirror.R;
 import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.call.CallHistoryAdapter;
 import com.gome.beautymirror.contacts.ContactsManager;
 import com.gome.beautymirror.contacts.ContactsUpdatedListener;
-import com.gome.beautymirror.fragments.FragmentsAvailable;
 import android.content.Intent;
 import com.gome.beautymirror.ui.SelectableHelper;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
 import java.util.LinkedHashMap ;
 import android.os.Handler;
-
-import com.gome.beautymirror.advertisement.BannerLayout;
-import com.gome.beautymirror.advertisement.PicassoImageLoader;
 
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.CallLog;
@@ -269,16 +260,8 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
             isClose = true;
             mLlOpenSysNotification.setVisibility(View.GONE);
         }else if(id == R.id.btn_open_sys_notification){
-            Intent localIntent = new Intent();
-            localIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (Build.VERSION.SDK_INT >= 9) {
-                localIntent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
-                localIntent.setData(Uri.fromParts("package", getContext().getPackageName(), null));
-            } else if (Build.VERSION.SDK_INT <= 8) {
-                localIntent.setAction(Intent.ACTION_VIEW);
-                localIntent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
-                localIntent.putExtra("com.android.settings.ApplicationPkgName",  getContext().getPackageName());
-            }
+            Intent localIntent =  new Intent(Settings.ACTION_SETTINGS);
+            startActivity(localIntent);
         }
 
     }

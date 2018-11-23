@@ -1,16 +1,14 @@
 package cole.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -26,6 +24,7 @@ import com.gome.beautymirror.R;
 
 import cole.view.MyOneLineView;
 import gome.beautymirror.ui.blurdialog.BlurDialog;
+import gome.beautymirror.ui.MyToast;
 
 public class MyDeviceActivity extends BaseActivity implements View.OnClickListener {
 
@@ -49,14 +48,6 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     protected void loadXml() {
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-        );
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
         setContentView(R.layout.bind_device);
     }
 
@@ -74,7 +65,7 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
         mTvMyDeviceName = findViewById(R.id.my_device_name);
         mTvBoundDevice = findViewById(R.id.bound_device);
         mResetDeviceName = findViewById(R.id.reset_device_name);
-        mResetDeviceName.initMine(0, getString(R.string.device_name_title), "", true,false);
+        mResetDeviceName.initMine(0, getString(R.string.device_name_title), "", true,true);
         mResetDeviceName.showLeftIcon(false);
         mLlBindDevice = findViewById(R.id.ll_bind_device);
         mBtnBind = findViewById(R.id.btn_bind_device);
@@ -87,14 +78,15 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
     protected void initData() {
         Cursor cursor = DataService.instance().getAccountsAndDevices(null, null, null, null);
         if (cursor != null && cursor.moveToFirst()) {
-            mStrDeviceName = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_DEVICE_NAME);
-            mStrAccount = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_ACCOUNT);
+            mStrDeviceName = cursor.getString(DatabaseUtil.Account.COLUMN_DEVICE_NAME);
+            mStrAccount = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
             mStrDeviceId = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
-            if(!"".equals(mStrDeviceId)){
+            if(mStrDeviceId != null && !"".equals(mStrDeviceId)){
                 isBound = true;
             }
             refresh();
         }
+        if (cursor != null) cursor.close();
     }
 
     @Override
@@ -120,7 +112,7 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
                 showDeviceNameDialog();
                 break;
             case R.id.btn_bind_device:
-
+                startActivityForResult(new Intent(this, BindDeviceActivity.class), 1);
                 break;
             case R.id.btn_unbind_device:
                 showUnbindDialog();
@@ -167,14 +159,19 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
                 sure.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        DataService.instance(). updateDevice(null, "111111",edittext.getText().toString(), new Handler() {
+                        DataService.instance().updateDevice(null, null, edittext.getText().toString(), new Handler() {
                             @Override
                             public void handleMessage(Message msg) {
-                                refresh();
-                                android.util.Log.d("xw", "xiongwei1 bindDevice msg="+msg);
+                                if (DataService.checkResult(msg)) {
+                                    String name = edittext.getText().toString();
+                                    mResetDeviceName.setRightText(name!=null && !"".equals(name) ? name : getString(R.string.my_device));
+                                    mTvMyDeviceName.setText(name!=null && !"".equals(name) ? name : getString(R.string.my_device));
+                                    dismiss();
+                                } else {
+                                    MyToast.showToast(MyDeviceActivity.this, "update fail.", MyToast.LENGTH_SHORT);
+                                }
                             }
                         }, 0);
-                        dismiss();
                     }
                 });
             }
@@ -194,13 +191,14 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
                 cancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        unBindService(false);
                         dismiss();
                     }
                 });
                 sure.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        unBindService(false);
+                        unBindService(true);
                         dismiss();
                     }
                 });
@@ -209,15 +207,25 @@ public class MyDeviceActivity extends BaseActivity implements View.OnClickListen
 
     }
 
-
-    private void unBindService(boolean isCancel){
-        DataService.instance().unbindDevice(null, "111111",isCancel ? 0:1, new Handler() {
+    private void unBindService(boolean unbind) {
+        DataService.instance().unbindDevice(null, null, unbind ? 1 : 0, new Handler() {
             @Override
             public void handleMessage(Message msg) {
-                isBound = DataService.checkResult(msg);
-                refresh();
-                android.util.Log.d("xw", "xiongwei1 unbindDevice msg="+msg);
+                if (DataService.checkResult(msg)) {
+                    isBound = false;
+                    refresh();
+                } else {
+                    MyToast.showToast(MyDeviceActivity.this, "unbind fail.", MyToast.LENGTH_SHORT);
+                }
             }
         }, 0);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            initData();
+        }
     }
 }

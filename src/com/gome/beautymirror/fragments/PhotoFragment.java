@@ -19,6 +19,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+import android.content.Intent;
+
 import android.support.v4.app.Fragment;
 
 import android.os.Bundle;
@@ -26,10 +28,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
+
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.bumptech.glide.Glide;
 import com.gome.beautymirror.advertisement.BannerLayout;
 import com.gome.beautymirror.advertisement.PicassoImageLoader;
 
@@ -38,10 +42,10 @@ import com.gome.beautymirror.R;
 import java.util.ArrayList;
 import java.util.List;
 
-
-public class PhotoFragment extends Fragment implements OnClickListener{
-
-   private LinearLayout mActionBar;
+import android.content.Context;
+import com.gome.beautymirror.gallery.FileUtil;
+public class PhotoFragment extends Fragment implements OnClickListener {
+    private LinearLayout mActionBar, mPhotoLayout, mNullPhotoLayout, mPhotoMainLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -50,7 +54,11 @@ public class PhotoFragment extends Fragment implements OnClickListener{
 
         mActionBar = view.findViewById(R.id.action_bar);
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId),0,0);
+        mActionBar.setPadding(0, getResources().getDimensionPixelSize(resourceId), 0, 0);
+        mPhotoLayout = view.findViewById(R.id.photo_layout);
+        mNullPhotoLayout = view.findViewById(R.id.photo_null_layout);
+        mPhotoMainLayout = view.findViewById(R.id.photo_main_layout);
+
 
         //加载广告页
         BannerLayout bannerLayout2 = (BannerLayout) view.findViewById(R.id.banner2);
@@ -67,6 +75,14 @@ public class PhotoFragment extends Fragment implements OnClickListener{
                 //Toast.makeText(MainActivity.this, String.valueOf(position), Toast.LENGTH_SHORT).show();
             }
         });
+
+        mPhotoMainLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), com.gome.beautymirror.gallery.GalleryActivity.class));
+            }
+        });
+
         return view;
     }
 
@@ -74,6 +90,49 @@ public class PhotoFragment extends Fragment implements OnClickListener{
     @Override
     public void onResume() {
         super.onResume();
+
+        String[] titles = FileUtil.getImageNames(FileUtil.FileName);
+        if(titles == null ){
+            mPhotoMainLayout.setVisibility(View.GONE);
+            mNullPhotoLayout.setVisibility(View.VISIBLE);
+        }else{
+            String[] imagePaths = new String[titles.length];
+            for (int i = 0; i < titles.length; i++) {
+                imagePaths[titles.length - 1 - i] = FileUtil.FileName + titles[i];
+            }
+            if (imagePaths.length == 0) {
+                mPhotoMainLayout.setVisibility(View.GONE);
+                mNullPhotoLayout.setVisibility(View.VISIBLE);
+            } else {
+                mPhotoMainLayout.setVisibility(View.VISIBLE);
+                mNullPhotoLayout.setVisibility(View.GONE);
+                mPhotoLayout.removeAllViews();
+                addPhotoView(imagePaths);
+            }
+        }
+    }
+
+
+    private void addPhotoView(String[] imagePaths) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        for (int i = 0; i < (imagePaths.length > 3 ? 3 : imagePaths.length); i++) {
+            View view = inflater.inflate(R.layout.gallery_round_item, null);
+            ImageView mImageView = view.findViewById(R.id.MyImageView);
+            mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            ImageView mImageView2=view.findViewById(R.id.vedio_play);
+            if(com.gome.beautymirror.gallery.MediaFile.isVideoFileType(imagePaths[i])){
+                mImageView2.setVisibility(View.VISIBLE);
+            }else{
+                mImageView2.setVisibility(View.GONE);
+            }
+            Glide.with(getActivity())
+                    .load(imagePaths[i])
+                    .into(mImageView);
+            view.setLayoutParams(lp);
+            mPhotoLayout.addView(view);
+        }
     }
 
     @Override
@@ -84,5 +143,11 @@ public class PhotoFragment extends Fragment implements OnClickListener{
     @Override
     public void onClick(View v) {
     }
+
+    public static int dip2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
 
 }

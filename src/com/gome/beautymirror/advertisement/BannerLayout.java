@@ -2,6 +2,10 @@ package com.gome.beautymirror.advertisement;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
@@ -29,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.gome.beautymirror.R;
-
+import com.gome.beautymirror.gallery.FilletImageView;
 public class BannerLayout extends RelativeLayout {
 
     private ViewPager pager;
@@ -210,8 +214,8 @@ public class BannerLayout extends RelativeLayout {
     }
 
     @NonNull
-    private com.gome.beautymirror.ui.RoundImageView getImageView(String url, final int position) {
-        com.gome.beautymirror.ui.RoundImageView imageView = new com.gome.beautymirror.ui.RoundImageView(getContext(),false);
+    private FilletImageView getImageView(String url, final int position) {
+        FilletImageView imageView = new FilletImageView(getContext());
         imageView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
