@@ -74,7 +74,7 @@ public class StrangerActivity extends BaseStatusBarActivity {
         final TextView cancel =view.findViewById(R.id.choosepage_cancel);
         final TextView sure =view.findViewById(R.id.choosepage_sure);
         final EditText edittext =view.findViewById(R.id.choosepage_edittext);
-        new BlurDialog(this,true){
+        new BlurDialog(this,false){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);

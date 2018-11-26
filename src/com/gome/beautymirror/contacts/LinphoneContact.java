@@ -64,6 +64,7 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
     private String devices;
     private long time;
     private byte[] icon;
+    private boolean isDevice;
 
     public LinphoneContact() {
         addresses = new ArrayList<com.gome.beautymirror.contacts.LinphoneNumberOrAddress>();
@@ -133,6 +134,14 @@ public class LinphoneContact implements Serializable, Comparable<LinphoneContact
 
     public void setIcon(byte[] icon) {
         this.icon = icon;
+    }
+
+    public boolean getDevice() {
+        return isDevice;
+    }
+
+    public void setDevice(boolean isDevice) {
+        this.isDevice = isDevice;
     }
 
 

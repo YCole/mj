@@ -66,6 +66,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MyViewHo
             holder.letter.setVisibility(View.VISIBLE);
             holder.letter.setText(currentLetter);
             holder.itemView.setTag(FIRST_STICKY_VIEW);
+            holder.letter.setBackground(mContext.getDrawable(R.drawable.bg_contact_sticky_header));
         } else if (position < mContactList.size()) {
             if (!TextUtils.equals(currentLetter, previousLetter)) {
                 holder.letter.setVisibility(View.VISIBLE);

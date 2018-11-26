@@ -68,7 +68,7 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/bt_cancle_search"
+                android:id="@+id/bt_cancle_search_phone"
                 android:layout_width="wrap_content"
                 android:layout_height="35dp"
                 android:layout_marginRight="12dp"
@@ -167,10 +167,10 @@
         <include
             layout="@layout/common_titlebar"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorC" />
+            android:layout_height="wrap_content" />
 
         <LinearLayout
+            android:id="@+id/ll_main"
             android:orientation="vertical"
             android:background="@drawable/bg_contact"
             android:layout_marginTop="-116dp"
@@ -220,7 +220,16 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         />
-                    <include layout="@layout/contact_sticky_header" />
+                    <!--<include layout="@layout/contact_sticky_header" />-->
+                    <TextView
+                        android:id="@+id/tv_contact_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="15dp"
+                        style="@style/separator_font"
+                        android:background="@drawable/bg_contact_sticky_header"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="23dp"
+                        />
 
                 </FrameLayout>
 
@@ -231,16 +240,17 @@
                     android:layout_height="50dp"
                     android:layout_centerInParent="true" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="15dp"
-                    android:background="#FFF5F8FA"/>
-
                 <LinearLayout
                     android:orientation="vertical"
                     android:id="@+id/no_register_user"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="15dp"
+                        android:background="#FFF5F8FA"/>
+
                     <ImageView
                         android:layout_width="132dp"
                         android:layout_height="132dp"
@@ -276,6 +286,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="15dp"
+                        android:background="#FFF5F8FA"/>
+
                     <TextView
                         android:text="@string/no_contact_permisson"
                         android:layout_width="match_parent"
@@ -306,6 +321,31 @@
                         android:layout_below="@+id/noContact"
                         android:layout_marginTop="5dp"
                         android:layout_centerVertical="true"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:visibility="gone"
+                    android:orientation="vertical"
+                    android:id="@+id/no_search_result"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:layout_width="132dp"
+                        android:layout_height="132dp"
+                        android:layout_marginLeft="114dp"
+                        android:layout_marginRight="114dp"
+                        android:layout_marginTop="52dp"
+                        android:src="@drawable/empty_nouser" />
+
+                    <TextView
+                        android:text="@string/no_search_result_text"
+                        style="@style/empty_font"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_centerVertical="true"/>
+
                 </LinearLayout>
 
 

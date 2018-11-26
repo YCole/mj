@@ -34,6 +34,7 @@ public class NewFriendActivity extends BaseStatusBarActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.contact_new_friend);
+        com.gome.beautymirror.data.DataService.instance().readProposer();
         mBtBack = findViewById(R.id.bt_back);
         mRlImportCcontact = findViewById(R.id.rl_import_contact);
         mTvTitleName=findViewById(R.id.tv_title_name);

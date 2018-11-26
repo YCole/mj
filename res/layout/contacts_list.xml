@@ -88,13 +88,7 @@
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/contactsList"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:fastScrollEnabled="true"
-                app:fastScrollHorizontalThumbDrawable="@drawable/fast_scroll"
-                app:fastScrollHorizontalTrackDrawable="@drawable/line_drawable"
-                app:fastScrollVerticalThumbDrawable="@drawable/fast_scroll"
-                app:fastScrollVerticalTrackDrawable="@drawable/line_drawable"
-                />
+                android:layout_height="match_parent" />
 
             <TextView
                 android:id="@+id/tv_contact_header"

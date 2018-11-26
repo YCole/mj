@@ -3,6 +3,7 @@ package com.gome.beautymirror.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import com.gome.beautymirror.LinphoneManager;
 import com.gome.beautymirror.R;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
+import com.gome.beautymirror.data.DataUtil;
 import com.gome.beautymirror.ui.RoundImageView;
 
 import org.linphone.core.Call;
@@ -36,6 +38,7 @@ public class MyDeviceDetailsActivity extends BaseStatusBarActivity  implements V
     private CoreListenerStub mListener;
     LinearLayout mSearchRoot, mActionBar;
     private String mStrDeviceName, mStrAccount,mStrDeviceSIP;
+    private Bitmap mBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,13 +98,18 @@ public class MyDeviceDetailsActivity extends BaseStatusBarActivity  implements V
             mStrDeviceName = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_DEVICE_NAME);
             mStrAccount = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_ACCOUNT);
             mStrDeviceSIP = cursor.getString(DatabaseUtil.Account.COLUMN_DEVICE_SIP);
+            mBitmap = DataUtil.getImage(cursor.getBlob(DatabaseUtil.Account.COLUMN_ICON));
             refreshView();
         }
+        if (cursor != null) cursor.close();
     }
 
     private void refreshView(){
         mTvDeviceName.setText(mStrDeviceName!=null && !"".equals(mStrDeviceName) ? mStrDeviceName : getString(R.string.my_device));
         mTvDevice.setText(mStrDeviceName!=null && !"".equals(mStrDeviceName) ? mStrDeviceName : getString(R.string.my_device));
+        if(mBitmap!=null){
+            mIcon.setImageBitmap(mBitmap);
+        }
     }
 
 
@@ -109,7 +117,7 @@ public class MyDeviceDetailsActivity extends BaseStatusBarActivity  implements V
     public void onClick(View v) {
         int id = v.getId();
         if(id == R.id.vedio_call_device){
-            BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mStrDeviceSIP,mStrDeviceName, null);
+            BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mStrDeviceSIP,mStrDeviceName, null,true);
         }else if(id == R.id.recent_call){
             Intent intent = new Intent(this, com.gome.beautymirror.activities.RecentCallActivity.class);
             Bundle extras = new Bundle();

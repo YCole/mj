@@ -19,6 +19,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -48,6 +49,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.gome.beautymirror.activities.BeautyMirrorActivity;
+import com.gome.beautymirror.contacts.ContactsManager;
 import com.gome.beautymirror.data.CallLog;
 import com.gome.beautymirror.data.DataUtil;
 import com.gome.beautymirror.data.DataThread;
@@ -84,10 +86,11 @@ public class DataService extends Service {
     private static final int LOOP_SIP_TIME = 10 * 1000;
     private static final int MESSAGE_SIP = 2;
     private static final int MESSAGE_ACCOUNT = 3;
-    private static final int MESSAGE_BROADCAST_FRIEND = 4;
-    private static final int MESSAGE_BROADCAST_PEOPLE = 5;
-    private static final int MESSAGE_BROADCAST_PROPOSER = 6;
-    private static final int MESSAGE_BROADCAST_INFORMATION = 7;
+    private static final int MESSAGE_PEOPLE = 4;
+    private static final int MESSAGE_BROADCAST_FRIEND = 5;
+    private static final int MESSAGE_BROADCAST_PEOPLE = 6;
+    private static final int MESSAGE_BROADCAST_PROPOSER = 7;
+    private static final int MESSAGE_BROADCAST_INFORMATION = 8;
 
     private static DataService instance;
 
@@ -129,6 +132,15 @@ public class DataService extends Service {
 
                 case MESSAGE_ACCOUNT:
                     result = checkDialog();
+                    break;
+
+                case MESSAGE_PEOPLE:
+                    String account = (String) msg.obj;
+                    int count = updatePeople(account, matchFriend(account));
+                    if (count > 0) {
+                        sendMsgDelayed(MESSAGE_BROADCAST_PEOPLE, 0);
+                    }
+                    result = true;
                     break;
 
                 case MESSAGE_BROADCAST_FRIEND:
@@ -264,23 +276,36 @@ public class DataService extends Service {
                 handler == null ? null : handler.obtainMessage(what)).start();
     }
 
+    @SuppressLint("SimpleDateFormat")
     public boolean loginAccount(Activity activity, final String account, final String password, String id, final Handler handler, final int what) {
-        if (checkAndRequestPermission(activity, Manifest.permission.READ_PHONE_STATE, PERMISSIONS_REQUEST_READ_PHONE_STATE)) {
-           return false;
+        if (TextUtils.isEmpty(account) || TextUtils.isEmpty(password) || (!DataUtil.IS_APP && TextUtils.isEmpty(id))) {
+            Log.d(TAG, "loginAccount: return");
+            return false;
+        } else if (checkAndRequestPermission(activity, Manifest.permission.READ_PHONE_STATE, PERMISSIONS_REQUEST_READ_PHONE_STATE)) {
+            return false;
         }
 
-        final String info = DataUtil.getMD5(mTelephonyManager.getDeviceId());
+        final String info = System.currentTimeMillis() + "";//DataUtil.getMD5(mTelephonyManager.getDeviceId());
         Handler h = new Handler() {
             @Override
             public void handleMessage(Message msg) {
                 JSONObject obj = (JSONObject) msg.obj;
                 try {
                     if (obj.getString(DataThread.RESULT_CODE).equals(DataThread.RESULT_OK)) {
-                        Uri uri = saveAccount(account, password, null, null, obj.getString("sip"), 0L, info, null);
+                        Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
+                        String deviceNo = obj.optString("deviceNo");
+                        Uri uri = saveAccount(account, password,
+                                 obj.optString("name"), DataUtil.getImage(obj.optString("icon")),
+                                 obj.getString("sip"), date.getTime(),
+                                 info, deviceNo);
                         if (uri == null) {
                             obj = DataThread.setJSONObject(DataThread.RESULT_ERROR, "account is error");
                         } else {
                             SaveUtils.writeUser(DataService.this, "account", account);
+                            if (!TextUtils.isEmpty(deviceNo)) {
+                                uri = saveDevice(deviceNo, null, obj.getString("deviceSip"));
+                                if (uri != null) checkDevice(account);
+                            }
                         }
                         boolean result = initialise(null);
                         result = sendMsgDelayed(MESSAGE_ACCOUNT, 1000);
@@ -289,6 +314,10 @@ public class DataService extends Service {
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "loginAccount: JSONException is ", e);
+                    obj = DataThread.setJSONObject(DataThread.RESULT_ERROR, e.toString());
+                } catch (ParseException e) {
+                    Log.e(TAG, "loginAccount: ParseException is ", e);
+                    obj = DataThread.setJSONObject(DataThread.RESULT_ERROR, e.toString());
                 }
                 if (handler != null) {
                     handler.obtainMessage(what, obj).sendToTarget();
@@ -357,7 +386,7 @@ public class DataService extends Service {
                                 } else {
                                     int count = updateDevice(deviceNo, obj.getString("deviceSip"));
                                 }
-                                checkDevice();
+                                checkDevice(account);
                             } else {
                                 if (!TextUtils.isEmpty(id)) {
                                     int count = updateAccountAndDevice(account, null);
@@ -504,6 +533,7 @@ public class DataService extends Service {
                 deleteCalllogs(null, null);
                 deleteInformations(null, null);
                 deleteFiles(null, null);
+                mNotificationManager.cancelAll();
             }
             return count;
         } else {
@@ -702,8 +732,8 @@ public class DataService extends Service {
         return mContentResolver.insert(DatabaseProvider.DEVICES_URI, values);
     }
 
-    private void checkDevice() {
-        Cursor cursor = getAccounts(null, null, null, null);
+    private void checkDevice(String account) {
+        Cursor cursor = getAccounts(null, TextUtils.isEmpty(account) ? null : DatabaseUtil.Account.ACCOUNT + " = " + account, null, null);
         if (cursor != null && cursor.moveToFirst()) {
             final String id = cursor.getString(DatabaseUtil.Account.COLUMN_ID);
             if (!TextUtils.isEmpty(id)) {
@@ -717,7 +747,7 @@ public class DataService extends Service {
                                 String name = obj.optString("deviceName");
                                 int count = updateDevice(id, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, 0L);
                                 if (obj.getInt("deviceStatus") == DEVICE_UNBIND) {
-                                    showNotification(NOTIF_DEVICE, "Notification", "Ready to unbind.", new Intent(DataService.this, BeautyMirrorActivity.class));
+                                    showNotification(NOTIF_DEVICE_UNBIND, "Notification", "Ready to unbind.", null, new Intent(DataService.this, BeautyMirrorActivity.class));
                                 }
                             } else {
                                 Log.d(TAG, "checkDevice: obj is " + obj);
@@ -938,11 +968,16 @@ public class DataService extends Service {
                                             new String[] {account},
                                             null);
                                     if (cursor != null && cursor.moveToFirst()) {
+                                        int count = 0;
                                         if (requestTime != cursor.getLong(DatabaseUtil.Proposer.COLUMN_REQUEST_TIME)) {
-                                            int count = updateProposer(account, requestTime, message, DatabaseUtil.Proposer.STATUS_NEW);
+                                            count = updateProposer(account, requestTime, message, DatabaseUtil.Proposer.STATUS_NEW);
+                                            if (count > 0) showNotification(NOTIF_FRIEND_REQUEST, "Notification",
+                                                    "New request for " + account,
+                                                    ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                                    new Intent(DataService.this, BeautyMirrorActivity.class));
                                         }
-                                        if (time != cursor.getLong(DatabaseUtil.Proposer.COLUMN_TIME)) {
-                                            syncProposer(account, time);
+                                        if (count > 0 || time != cursor.getLong(DatabaseUtil.Proposer.COLUMN_TIME)) {
+                                            syncProposer(account, time, count > 0);
                                         }
                                     } else {
                                         Uri uri = saveProposer(account,
@@ -952,7 +987,13 @@ public class DataService extends Service {
                                                 requestTime,
                                                 message,
                                                 DatabaseUtil.Proposer.STATUS_NEW);
-                                        syncProposer(account, time);
+                                        if (uri != null) {
+                                            showNotification(NOTIF_FRIEND_REQUEST, "Notification",
+                                                    "New request for " + account,
+                                                    ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                                    new Intent(DataService.this, BeautyMirrorActivity.class));
+                                            syncProposer(account, time, true);
+                                        }
                                     }
                                     if (cursor != null) cursor.close();
                                     sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
@@ -974,44 +1015,45 @@ public class DataService extends Service {
                                             }
                                         }
                                         if (time != friend.getTime()) {
-                                            syncFriend(account);
+                                            syncFriend(account, false);
                                         }
                                         friends.remove(account);
                                     } else {
-                                        if (!TextUtils.isEmpty(id)) {
-                                            Uri uri = saveFriend(account,
-                                                    null,
-                                                    null,
-                                                    0L,
-                                                    id,
-                                                    data.optString("friendComment"),
-                                                    data.getString("accountSip"));
-                                            uri = saveFriendDevice(id, null, data.optString("deviceSip"));
-                                        } else {
-                                            Uri uri = saveFriend(account,
-                                                    null,
-                                                    null,
-                                                    0L,
-                                                    null,
-                                                    data.optString("friendComment"),
-                                                    data.getString("accountSip"));
-                                        }
+                                        Uri uri = saveFriend(account,
+                                                null,
+                                                null,
+                                                0L,
+                                                TextUtils.isEmpty(id) ? null : id,
+                                                data.optString("friendComment"),
+                                                data.getString("accountSip"));
+                                        if (!TextUtils.isEmpty(id)) uri = saveFriendDevice(id, null, data.optString("deviceSip"));
                                         int count = updateProposer(account, DatabaseUtil.Proposer.STATUS_FRIEND);
                                         if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
                                         count = updatePeople(account, DatabaseUtil.People.STATUS_FRIEND);
                                         count = updateInformation(account, DatabaseUtil.Information.REQUEST_CONFIRMED);
                                         if (count > 0) {
                                             sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
-                                            showNotification(NOTIF_INFORMATION, "Notification", "New Friend", new Intent(DataService.this, BeautyMirrorActivity.class));
                                         }
-                                        syncFriend(account);
+                                        if (uri != null) {
+                                            if (count > 0) showNotification(NOTIF_FRIEND_CONFIRMED, "Notification",
+                                                    "New confirmed for " + account,
+                                                    ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                                    new Intent(DataService.this, BeautyMirrorActivity.class));
+                                            syncFriend(account, count > 0);
+                                        }
                                     }
                                     sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
                                 }
                             }
                             for (String account : friends.keySet()) {
                                 int count = deleteFriend(account);
-                                if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                                if (count > 0) {
+                                    sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
+                                    showNotification(NOTIF_FRIEND_DELETED, "Notification",
+                                            "Deleted for " + account,
+                                            ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                            new Intent(DataService.this, BeautyMirrorActivity.class));
+                                }
                                 count = updatePeople(account, DatabaseUtil.People.STATUS_UNKNOW);
                                 count = deleteProposer(account);
                                 if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
@@ -1038,7 +1080,7 @@ public class DataService extends Service {
     }
 
     @SuppressLint("SimpleDateFormat")
-    private void syncFriend(final String account) {
+    private void syncFriend(final String account, final boolean show) {
         Handler h = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -1046,15 +1088,20 @@ public class DataService extends Service {
                     JSONObject obj = (JSONObject) msg.obj;
                     if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                         String name = obj.optString("name");
+                        Bitmap icon = DataUtil.getImage(obj.optString("icon"));
                         Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(obj.getString("updateTime"));
                         int count = updateFriend(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                                icon, date.getTime());
                         if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_FRIEND, 0);
                         count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                                icon, date.getTime());
                         if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
                         count = updatePeople(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name,
-                                DataUtil.getImage(obj.optString("icon")), date.getTime());
+                                icon, date.getTime());
+                        if (show) showNotification(NOTIF_FRIEND_CONFIRMED, "Notification",
+                                "New confirmed for " + (TextUtils.isEmpty(name) || EMPTY.equals(name) ? account : name),
+                                icon != null ? icon : ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                new Intent(DataService.this, BeautyMirrorActivity.class));
                     } else {
                         Log.d(TAG, "syncFriend: obj is " + obj);
                     }
@@ -1506,6 +1553,11 @@ public class DataService extends Service {
                 JSONObject obj = (JSONObject) msg.obj;
                 try {
                     if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
+                        int count = updatePeople(number, DatabaseUtil.People.STATUS_REQUEST);
+                        if (count > 0) {
+                            sendMsgDelayed(MESSAGE_BROADCAST_PEOPLE, 0);
+                            mHandler.sendMessageDelayed(mHandler.obtainMessage(MESSAGE_PEOPLE, number), 60 * 1000);
+                        }
                         Uri uri = logInformation(number, DatabaseUtil.Information.REQUEST_FRIEND);
                         if (uri != null) sendMsgDelayed(MESSAGE_BROADCAST_INFORMATION, 0);
                     } else if ("444".equals(obj.getString(DataThread.RESULT_CODE))) {
@@ -1533,7 +1585,7 @@ public class DataService extends Service {
         return true;
     }
 
-    private void syncProposer(final String account, final Long time) {
+    private void syncProposer(final String account, final Long time, final boolean show) {
         Handler h = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -1541,8 +1593,13 @@ public class DataService extends Service {
                     JSONObject obj = (JSONObject) msg.obj;
                     if (DataThread.RESULT_OK.equals(obj.getString(DataThread.RESULT_CODE))) {
                         String name = obj.optString("friendName");
-                        int count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, DataUtil.getImage(obj.optString("friendIcon")), time);
+                        Bitmap icon = DataUtil.getImage(obj.optString("friendIcon"));
+                        int count = updateProposer(account, (TextUtils.isEmpty(name) || EMPTY.equals(name)) ? null : name, icon, time);
                         if (count > 0) sendMsgDelayed(MESSAGE_BROADCAST_PROPOSER, 0);
+                        if (show) showNotification(NOTIF_FRIEND_REQUEST, "Notification",
+                                "New request for " + (TextUtils.isEmpty(name) || EMPTY.equals(name) ? account : name),
+                                icon != null ? icon : ContactsManager.getInstance().getDefaultAvatarBitmap(),
+                                new Intent(DataService.this, BeautyMirrorActivity.class));
                     } else {
                         Log.d(TAG, "syncProposer: obj is " + obj);
                     }
@@ -1566,7 +1623,12 @@ public class DataService extends Service {
         values.put(DatabaseUtil.Proposer.REQUEST_TIME, request_time);
         values.put(DatabaseUtil.Proposer.MESSAGE, message);
         values.put(DatabaseUtil.Proposer.STATUS, status);
+        values.put(DatabaseUtil.Proposer.READ, DatabaseUtil.Proposer.READ_NEW);
         return mContentResolver.insert(DatabaseProvider.PROPOSERS_URI, values);
+    }
+
+    public Cursor getProposers(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return mContentResolver.query(DatabaseProvider.PROPOSERS_URI, projection, selection, selectionArgs, sortOrder);
     }
 
     private int updateProposer(String account, Long request_time, String message, int status) {
@@ -1574,6 +1636,7 @@ public class DataService extends Service {
         values.put(DatabaseUtil.Proposer.REQUEST_TIME, request_time);
         values.put(DatabaseUtil.Proposer.MESSAGE, message);
         values.put(DatabaseUtil.Proposer.STATUS, status);
+        values.put(DatabaseUtil.Proposer.READ, DatabaseUtil.Proposer.READ_NEW);
         return mContentResolver.update(DatabaseProvider.PROPOSERS_URI, values, DatabaseUtil.Proposer.ACCOUNT + " = ?", new String[]{account});
     }
 
@@ -1592,8 +1655,10 @@ public class DataService extends Service {
         return mContentResolver.update(DatabaseProvider.PROPOSERS_URI, values, DatabaseUtil.Proposer.ACCOUNT + " = ?", new String[]{account});
     }
 
-    public Cursor getProposers(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        return mContentResolver.query(DatabaseProvider.PROPOSERS_URI, projection, selection, selectionArgs, sortOrder);
+    public int readProposer() {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseUtil.Proposer.READ, DatabaseUtil.Proposer.READ_OLD);
+        return mContentResolver.update(DatabaseProvider.PROPOSERS_URI, values, DatabaseUtil.Proposer.READ + " = ?", new String[]{DatabaseUtil.Proposer.READ_NEW + ""});
     }
 
     private int deleteProposers(String selection, String[] selectionArgs) {
@@ -1964,17 +2029,21 @@ public class DataService extends Service {
         Toast.makeText(this, text, length).show();
     }
 
-    private static final int NOTIF_DEVICE = 1;
-    private static final int NOTIF_INFORMATION = 2;
+    private static final int NOTIF_DEVICE_UNBIND = 1;
+    private static final int NOTIF_FRIEND_REQUEST = 2;
+    private static final int NOTIF_FRIEND_CONFIRMED = 3;
+    private static final int NOTIF_FRIEND_DELETED = 4;
 
-    private void showNotification(int id, String title, String text, Intent intent) {
+    private void showNotification(int id, String title, String text, Bitmap icon, Intent intent) {
         Notification.Builder builder = new Notification.Builder(this);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         builder.setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(contentIntent)
                 .setDefaults(Notification.DEFAULT_ALL)
-                .setSmallIcon(R.mipmap.ic_launcher);
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setTicker("New message")
+                .setLargeIcon(icon != null ? icon : BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(title, text, NotificationManager.IMPORTANCE_DEFAULT);
             builder.setChannelId(title);

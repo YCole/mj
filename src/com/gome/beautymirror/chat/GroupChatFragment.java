@@ -135,7 +135,7 @@ public class GroupChatFragment extends Fragment implements ChatRoomListener, Con
         mCallButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mRemoteParticipantAddress.asString(), null, null);
+                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mRemoteParticipantAddress.asString(), null, null,false);
             }
         });
 
@@ -802,7 +802,7 @@ public class GroupChatFragment extends Fragment implements ChatRoomListener, Con
                 @Override
                 public void onClick(View view) {
                     LinphoneManager.getInstance().newOutgoingCall(from.asStringUriOnly()
-                            , (contact != null) ? contact.getFullName() : from.getUsername());
+                            , (contact != null) ? contact.getFullName() : from.getUsername(),false);
                     dialog.dismiss();
                 }
             });

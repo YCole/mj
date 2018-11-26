@@ -21,8 +21,8 @@
             android:layout_width="match_parent"
             android:layout_height="160dp"
             android:background="@drawable/bg_card"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginRight="@dimen/bg_card_margin"
+            android:layout_marginLeft="@dimen/bg_card_margin"
             android:orientation="vertical">
 
             <TextView
@@ -54,8 +54,8 @@
         android:id="@+id/account"
         android:background="@drawable/bg_card"
         android:layout_marginTop="74dp"
-        android:layout_marginRight="12dp"
-        android:layout_marginLeft="12dp"
+        android:layout_marginRight="@dimen/bg_card_margin"
+        android:layout_marginLeft="@dimen/bg_card_margin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

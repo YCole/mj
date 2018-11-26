@@ -97,6 +97,7 @@ public class ContactDetailsActivity  extends BaseStatusBarActivity  implements V
             displayednumberOrAddress = LinphoneUtils.getDisplayableUsernameFromAddress(value);
             mTvAccount.setText(displayednumberOrAddress);
             callAccount.setTag(value);
+            callDevice.setTag(value);
         }
 
         Cursor cursor = DataService.instance().getFriendsAndDevices(null,
@@ -159,10 +160,10 @@ public class ContactDetailsActivity  extends BaseStatusBarActivity  implements V
             if (BeautyMirrorActivity.isInstanciated()) {
                 LinphoneUtils.setInitiateVideoCall(true);
                 String tag = (String) v.getTag();
-                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(tag, contact.getFullName(), contact.getPhotoUri());
+                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(tag, contact.getFullName(), contact.getPhotoUri(),false);
             }
         }else if(id == R.id.vedio_call_device){
-            BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(mStrDeviceSIP,(contact.getFullName()+getString(R.string.contact_detail_device)), null);
+            BeautyMirrorActivity.instance().setAddresGoToDialerAndCall((String) v.getTag(),(contact.getFullName()+getString(R.string.contact_detail_device)), null,true);
 
         }else if(id == R.id.recent_call){
             Intent intent = new Intent(this, com.gome.beautymirror.activities.RecentCallActivity.class);
@@ -192,7 +193,7 @@ public class ContactDetailsActivity  extends BaseStatusBarActivity  implements V
         final TextView sure =view.findViewById(R.id.sure);
         final TextView message =view.findViewById(R.id.message);
         message.setText(String.format(getResources().getString(R.string.delete_friend_message),name));
-        new BlurDialog(this,true){
+        new BlurDialog(this,false){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
@@ -233,7 +234,7 @@ public class ContactDetailsActivity  extends BaseStatusBarActivity  implements V
         final TextView sure =view.findViewById(R.id.choosepage_sure);
         final EditText edittext =view.findViewById(R.id.choosepage_edittext);
         edittext.setText(contact.getRemarkName());
-         new BlurDialog(this,true){
+         new BlurDialog(this,false){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);

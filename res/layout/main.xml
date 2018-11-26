@@ -17,7 +17,6 @@
 
             <RelativeLayout
                 android:id="@+id/top_bar"
-                android:background="@color/colorF"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:visibility="gone"
@@ -47,9 +46,8 @@
             <RadioGroup
                 android:id="@+id/rg_home_radiogroup"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="43dp"
                 android:layout_alignParentBottom="true"
-
                 android:orientation="horizontal"
                 android:visibility="visible">
 
@@ -76,16 +74,24 @@
 
                 <gome.beautymirror.ui.BadgeRadioButton
                     android:id="@+id/tab_main_dialer"
+                    android:visibility="gone"
                     style="@style/main_radiobox_style"
                     android:text="拨号盘" />
 
             </RadioGroup>
 
+            <View
+                android:layout_alignTop="@+id/rg_home_radiogroup"
+                android:id="@+id/divide_home_radiogroup"
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="#26000000"/>
+
             <android.support.v4.view.ViewPager
                 android:id="@+id/viewPager"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_above="@id/rg_home_radiogroup" />
+                android:layout_above="@id/divide_home_radiogroup" />
 
         </RelativeLayout>
 

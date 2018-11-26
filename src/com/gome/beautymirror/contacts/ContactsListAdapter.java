@@ -66,6 +66,7 @@ public class ContactsListAdapter extends SelectableAdapter<ContactsListAdapter.V
         public LinearLayout contactCell;
         public RelativeLayout mRlNewFriend;
         public RelativeLayout mRlMyDevice;
+        private View mDivideView;
 
         private ViewHolder(View view, ClickListener listener,int viewType) {
             super(view);
@@ -83,6 +84,7 @@ public class ContactsListAdapter extends SelectableAdapter<ContactsListAdapter.V
                 headerTextView = view.findViewById(R.id.tv_contact_header);
                 contactCount = view.findViewById(R.id.contact_count);
                 contactCell = view.findViewById(R.id.contact_cell);
+                mDivideView = view.findViewById(R.id.divider_view);
                 view.setOnClickListener(this);
                 view.setOnLongClickListener(this);
                 contactCall.setOnClickListener(this);
@@ -203,17 +205,20 @@ public class ContactsListAdapter extends SelectableAdapter<ContactsListAdapter.V
                 }
             }
             if(position < mContacts.size() ){
+                boolean isDevice = contact.getDevice();
                 holder.itemView.setContentDescription(contact.getLetter());
                 for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
                     String value = noa.getValue();
                     String displayednumberOrAddress = LinphoneUtils.getDisplayableUsernameFromAddress(value);
                     holder.sipUri.setText(displayednumberOrAddress);
                 }
+                holder.sipUri.setVisibility(isDevice ? View.GONE:View.VISIBLE);
                 String remark = contact.getRemarkName();
                 if (!TextUtils.isEmpty(remark)) {
-                    holder.name.setText(remark);
+                    holder.name.setText(isDevice? remark + mContext.getResources().getString(R.string.contact_detail_device):remark);
                 } else
-                    holder.name.setText(contact.getFullName());
+                    holder.name.setText(isDevice? contact.getFullName() + mContext.getResources().getString(R.string.contact_detail_device):contact.getFullName());
+
                 String currentLetter = contact.getLetter();
                 String previousLetter = position >= 1 ? mContacts.get(position - 1).getLetter() : "";
                 if (!TextUtils.equals(currentLetter, previousLetter)) {
@@ -224,6 +229,7 @@ public class ContactsListAdapter extends SelectableAdapter<ContactsListAdapter.V
                 holder.linphoneFriend.setVisibility(contact.isInFriendList() ? View.VISIBLE : View.GONE);
 
                 holder.contactPicture.setImageBitmap(ContactsManager.getInstance().getDefaultAvatarBitmap());
+                holder.contactPicture.setVisibility(isDevice ? View.INVISIBLE:View.VISIBLE);
         /*if (contact.hasPhoto()) {
             LinphoneUtils.setThumbnailPictureFromUri(BeautyMirrorActivity.instance(), holder.contactPicture, contact.getThumbnailUri());
         }*/
@@ -245,6 +251,16 @@ public class ContactsListAdapter extends SelectableAdapter<ContactsListAdapter.V
                 holder.delete.setChecked(isSelected(position));
                 holder.contactCount.setVisibility(View.GONE);
                 holder.contactCell.setVisibility(View.VISIBLE);
+                if(position < mContacts.size()-1 ){
+                    String lastLetter = position >= 1 ? mContacts.get(position + 1).getLetter() : "";
+                    if (!TextUtils.equals(currentLetter, lastLetter)) {
+                        holder.mDivideView.setVisibility(View.GONE);
+                    } else {
+                        holder.mDivideView.setVisibility(View.VISIBLE);
+                    }
+                }else if(position == mContacts.size()-1){
+                    holder.mDivideView.setVisibility(View.GONE);
+                }
             }
 
         }else{

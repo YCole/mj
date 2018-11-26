@@ -8,7 +8,6 @@
     <include
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorC"
         layout="@layout/common_titlebar" />
 
     <LinearLayout

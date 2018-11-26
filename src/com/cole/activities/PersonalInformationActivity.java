@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,6 +31,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.R;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 import com.gome.beautymirror.data.DataUtil;
@@ -108,7 +108,7 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
 
     @Override
     protected void initData() {
-        Cursor cursor = com.gome.beautymirror.data.DataService.instance().getAccountsAndDevices(null, null, null, null);
+        Cursor cursor = DataService.instance().getAccountsAndDevices(null, null, null, null);
         if (cursor != null && cursor.moveToFirst()) {
             mStrAccount = cursor.getString(DatabaseUtil.Account.COLUMN_ACCOUNT);
             mAvatarBitmap = DataUtil.getImage(cursor.getBlob(DatabaseUtil.Account.COLUMN_ICON));
@@ -144,9 +144,7 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
                 showNickNameDialog();
                 break;
             case R.id.btn_logout:
-                if (com.gome.beautymirror.data.DataService.instance().logoutAccount(null) > 0) {
-                    com.gome.beautymirror.activities.BeautyMirrorActivity.instance().startRigisterAndLogin();
-                }
+                showLogoutDialog();
                 break;
             case R.id.reset_avatar:
                 ShowListDialog();
@@ -184,10 +182,10 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
             if (data != null) {
                 final Bitmap bitmap = data.getParcelableExtra("data");
                 if (bitmap != null) {
-                    com.gome.beautymirror.data.DataService.instance().updateAccount(mStrAccount, mStrNickName, bitmap, new Handler() {
+                    DataService.instance().updateAccount(mStrAccount, mStrNickName, bitmap, new Handler() {
                         @Override
                         public void handleMessage(Message msg) {
-                            if (com.gome.beautymirror.data.DataService.checkResult(msg)) {
+                            if (DataService.checkResult(msg)) {
                                 mAvatarBitmap = bitmap;
                                 refresh();
                             } else {
@@ -259,10 +257,10 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
     }
 
     private void deletePhoto() {
-        com.gome.beautymirror.data.DataService.instance().updateAccount(mStrAccount, mStrNickName, null, new Handler() {
+        DataService.instance().updateAccount(mStrAccount, mStrNickName, null, new Handler() {
             @Override
             public void handleMessage(Message msg) {
-                if (com.gome.beautymirror.data.DataService.checkResult(msg)) {
+                if (DataService.checkResult(msg)) {
                     mAvatarBitmap =  null;
                     refresh();
                 } else {
@@ -296,10 +294,10 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
                     public void onClick(View v) {
                         final String nickename=edittext.getText().toString();
                         if(!"".equals(nickename)){
-                            com.gome.beautymirror.data.DataService.instance().updateAccount(mStrAccount, nickename, mAvatarBitmap, new Handler() {
+                           DataService.instance().updateAccount(mStrAccount, nickename, mAvatarBitmap, new Handler() {
                                 @Override
                                 public void handleMessage(Message msg) {
-                                    if (com.gome.beautymirror.data.DataService.checkResult(msg)) {
+                                    if (DataService.checkResult(msg)) {
                                         mStrNickName = nickename;
                                         refresh();
                                     } else {
@@ -351,6 +349,38 @@ public class PersonalInformationActivity  extends BaseActivity implements View.O
         lp.y = (int)dpToPx(mContext,20);
         window.setAttributes(lp);
         dialog.show();
+
+    }
+
+    private void showLogoutDialog(){
+            final View view= LayoutInflater.from(this).inflate(R.layout.dialog_logout, null);
+            final TextView cancel =view.findViewById(R.id.cancel);
+            final TextView sure =view.findViewById(R.id.sure);
+            final TextView title =view.findViewById(R.id.title);
+            title.setText(getString(R.string.dialog_logout));
+            new BlurDialog(this,false){
+                @Override
+                protected void onCreate(Bundle savedInstanceState) {
+                    super.onCreate(savedInstanceState);
+                    setContentView(view);
+                    cancel.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            dismiss();
+                        }
+                    });
+                    sure.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (DataService.instance().logoutAccount(null) > 0) {
+                                com.gome.beautymirror.activities.BeautyMirrorActivity.instance().startRigisterAndLogin();
+                            }
+                            dismiss();
+                        }
+                    });
+                }
+            }.show();
+
 
     }
 

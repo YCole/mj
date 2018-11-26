@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Dialog;
 
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.v4.app.Fragment;
@@ -101,6 +102,8 @@ import org.linphone.core.CoreListenerStub;
 import org.linphone.core.ProxyConfig;
 import org.linphone.core.Reason;
 import org.linphone.core.RegistrationState;
+
+import com.gome.beautymirror.data.provider.DatabaseUtil;
 import com.gome.beautymirror.fragments.AccountPreferencesFragment;
 import com.gome.beautymirror.fragments.DialerFragment;
 import com.gome.beautymirror.fragments.EmptyFragment;
@@ -140,6 +143,9 @@ import gome.beautymirror.fragments.PhotoFragment;
 import gome.beautymirror.ui.BadgeRadioButton;
 
 public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements OnClickListener, ContactPicked, ActivityCompat.OnRequestPermissionsResultCallback ,MineFragment.OnFragmentInteractionListener {
+
+    private static boolean isDialpadOpen = false;
+
     private static final int SETTINGS_ACTIVITY = 123;
     private static final int CALL_ACTIVITY = 19;
     private static final int PERMISSIONS_REQUEST_OVERLAY = 206;
@@ -376,7 +382,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                     displayMissedCalls(0);
                 } else if (id == R.id.tab_main_mine) {
                     viewPager.setCurrentItem(FRAGMENGT_MINE);
-                }else if (id == R.id.tab_main_dialer) {
+                }else if (id == R.id.tab_main_dialer && isDialpadOpen) {
                     viewPager.setCurrentItem(FRAGMENGT_DIALER);
                 }
             }
@@ -718,7 +724,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
     }
 
     @Override
-    public void setAddresGoToDialerAndCall(String number, String name, Uri photo) {
+    public void setAddresGoToDialerAndCall(String number, String name, Uri photo,final boolean isDevice) {
 //      Bundle extras = new Bundle();
 //      extras.putString("SipUri", number);
 //      extras.putString("DisplayName", name);
@@ -732,7 +738,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
             @Override
             public void handleMessage(Message msg) {
                 if (DataService.checkResult(msg)) {
-                    LinphoneManager.getInstance().newOutgoingCall(address);
+                    LinphoneManager.getInstance().newOutgoingCall(address,isDevice);
                 } else {
                     displayCustomToast("fail", Toast.LENGTH_LONG);
                 }
@@ -1080,7 +1086,6 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         filter.addAction(DataUtil.BROADCAST_PROPOSER);
         filter.addAction(DataUtil.BROADCAST_INFORMATION);
         registerReceiver(mBroadcastReceiver, filter);
-
         if (DataService.isReady()) {
             DataService.instance().initialise(this);
         }
@@ -1171,6 +1176,9 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
 
         android.util.Log.d("xw", "xiongwei1 onResume");
         ContactsManager.getInstance().fetchContactsAsync();
+        if (DataService.isReady()) {
+            mContacts.setBadgeNumber(getNewFriendBagdeNumber());
+        }
     }
 
     public static void transportStatus(Activity context){
@@ -1695,17 +1703,17 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
 
     private void initTabRes() {
         Drawable drawable = getResources().getDrawable(R.drawable.menu_home_selector_tab);
-        drawable.setBounds(0, 0, 40, 40);
+        drawable.setBounds(0, 0, 48,48);
 
         Drawable drawable1 = getResources().getDrawable(R.drawable.menu_message_selector_tab);
-        drawable1.setBounds(0, 0, 40, 40);
+        drawable1.setBounds(0, 0, 48, 48);
 
         Drawable drawable2 = getResources().getDrawable(R.drawable.menu_contacts_selector_tab
                 );
-        drawable2.setBounds(0, 0, 40, 40);
+        drawable2.setBounds(0, 0, 48, 48);
 
         Drawable drawable3 = getResources().getDrawable(R.drawable.menu_mine_selector_tab);
-        drawable3.setBounds(0, 0, 40, 40);
+        drawable3.setBounds(0, 0, 48, 48);
 
         mHome.setCompoundDrawables(null, drawable, null, null);
         mContacts.setCompoundDrawables(null, drawable2, null, null);
@@ -1721,6 +1729,9 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         mInformation = (BadgeRadioButton) findViewById(R.id.tab_main_notification);
         mDialer = (BadgeRadioButton) findViewById(R.id.tab_main_dialer);
         mMine = (BadgeRadioButton) findViewById(R.id.tab_main_mine);
+        if(isDialpadOpen){
+            mDialer.setVisibility(View.VISIBLE);
+        }
 
     }
 
@@ -1737,6 +1748,19 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
         super.onStop();
     }
 
+    public int getNewFriendBagdeNumber(){
+        int mNotReadNewFriendCount = 0;
+        Cursor cursor = DataService.instance().getProposers(null,
+                DatabaseUtil.Proposer.READ + " = " + DatabaseUtil.Proposer.READ_NEW,
+                null,
+                DatabaseUtil.Proposer.REQUEST_TIME + " desc");
+        if(cursor!=null){
+            mNotReadNewFriendCount =  cursor.getCount();
+            cursor.close();
+        }
+        return mNotReadNewFriendCount;
+    }
+
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -1750,6 +1774,7 @@ public class BeautyMirrorActivity extends BeautyMirrorGenericActivity implements
                 android.util.Log.d("BeautyMirrorActivity", "BROADCAST_PEOPLE");
             } else if(DataUtil.BROADCAST_PROPOSER.equals(action)) {
                 mContactsListFragment.refreshData();
+                mContacts.setBadgeNumber(getNewFriendBagdeNumber());
             } else if(DataUtil.BROADCAST_INFORMATION.equals(action)) {
                 android.util.Log.d("BeautyMirrorActivity", "BROADCAST_INFORMATION");
             } else {

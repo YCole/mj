@@ -85,7 +85,7 @@ public class DrawableCenterRadioButton extends RadioButton {
             }
             mOffSize = (getHeight() - bodyHeight) / 2;
 
-            canvas.translate(0, 12.5f);
+            canvas.translate(0, 6.5f);
         }
         super.onDraw(canvas);
     }

@@ -20,16 +20,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v4.app.Fragment;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -48,14 +47,12 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.github.promeg.pinyinhelper.Pinyin;
 import com.gome.beautymirror.LinphoneManager;
 import com.gome.beautymirror.LinphoneUtils;
 import com.gome.beautymirror.R;
 import com.gome.beautymirror.activities.BeautyMirrorActivity;
 import com.gome.beautymirror.fragments.FragmentsAvailable;
 import com.gome.beautymirror.ui.SelectableHelper;
-import com.gome.beautymirror.contacts.ContactListActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +61,7 @@ import java.util.concurrent.Executors;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.provider.DatabaseUtil;
 
-import cole.activities.MyDeviceActivity;
+import com.gome.beautymirror.ui.RoundImageView;
 import gome.beautymirror.contacts.newfriend.RequestInfo;
 import gome.beautymirror.contacts.newfriend.SearchContactsAdapter;
 
@@ -91,13 +88,19 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     private ContactsListAdapter mContactAdapter;
     private SearchContactsAdapter mSearchAdapter;
     private RelativeLayout mRlNewFriend,mRlMyDevice;
-    private TextView mRequestNum;
+    private TextView mRequestNum,mHeadRequestNum;
+    private RoundImageView mNewfrendPicture,mHeadNewfrendPicture, mDevicePicture, mHeadDevicePicture;
     ArrayList<RequestInfo> mData = new ArrayList();
 
     List<LinphoneContact> listContact;
     List<LinphoneContact> mSearchContact;
     private FrameLayout listLayout;
     private LinearLayout mLlNewFriend;
+    private View mHeadView;
+    private String mStrDeviceName;
+    private Bitmap mBitmap;
+    private TextView mMyDeviceName,mHeadMyDeviceName;
+    private ImageView mNotReadNewFriendBagde;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -143,6 +146,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
                 gotoNewFriendActivity();
             }
         });
+        mNewfrendPicture= view.findViewById(R.id.newfrend_picture);
         mRlMyDevice = view.findViewById(R.id.rl_my_device);
         mRlMyDevice.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -240,6 +244,15 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
                 }
             }
         });
+
+        mHeadView = View.inflate(getActivity().getApplicationContext(),R.layout.contacts_list_head,null);
+        mHeadNewfrendPicture = mHeadView.findViewById(R.id.newfrend_picture);
+        mHeadRequestNum= mHeadView.findViewById(R.id.tv_new_request_num);
+        mDevicePicture = view.findViewById(R.id.device_picture);
+        mHeadDevicePicture = mHeadView.findViewById(R.id.device_picture);
+        mMyDeviceName = view.findViewById(R.id.my_device_name);
+        mHeadMyDeviceName = mHeadView.findViewById(R.id.my_device_name);
+        mNotReadNewFriendBagde = mHeadView.findViewById(R.id.badge_noread_new_friend);
         return view;
     }
 
@@ -255,16 +268,21 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         if (mData.size() > 0) {
             int num=0;
             String RequestNumFormat = getResources().getString(R.string.contact_new_request_num);
-            for(RequestInfo info:mData){
-                if(info.getHandleFlag()==0){
-                    num++;
-                }
-            }
+            num = BeautyMirrorActivity.instance().getNewFriendBagdeNumber();
             if(num>0){
                 mRequestNum.setText(String.format(RequestNumFormat, num));
+                mHeadRequestNum.setText(String.format(RequestNumFormat, num));
+                mNewfrendPicture.setImageBitmap(DataUtil.getImage(mData.get(0).getAvatar()));
+                mHeadNewfrendPicture.setImageBitmap(DataUtil.getImage(mData.get(0).getAvatar()));
+                mNotReadNewFriendBagde.setVisibility(View.VISIBLE);
             }else{
                 mRequestNum.setText(getString(R.string.contact_add_phone_contact_friend));
+                mHeadRequestNum.setText(getString(R.string.contact_add_phone_contact_friend));
+                mNewfrendPicture.setImageBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.image_newfrend));
+                mHeadNewfrendPicture.setImageBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.image_newfrend));
+                mNotReadNewFriendBagde.setVisibility(View.GONE);
             }
+
         }
     }
 
@@ -351,7 +369,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             }
 
             mContactAdapter = new ContactsListAdapter(mContext, listContact, this, mSelectionHelper,false);
-            mContactAdapter.addHeadView(View.inflate(getActivity().getApplicationContext(),R.layout.contacts_list_head,null));
+            mContactAdapter.addHeadView(mHeadView);
 
             mSelectionHelper.setAdapter(mContactAdapter);
 
@@ -400,7 +418,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         if (isCall) {
             for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
                 String value = noa.getValue();
-                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(value, contact.getFullName(), contact.getPhotoUri());
+                BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(value, contact.getFullName(), contact.getPhotoUri(),contact.getDevice());
             }
         } else {
             if (position < mContactAdapter.getItemCount()) {
@@ -413,7 +431,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     public void onItemClicked(int position,boolean isCall, boolean isNewFriend, boolean isMyDevice) {
         if(position == 0 ){
             if(isNewFriend){
-               gotoNewFriendActivity();
+                gotoNewFriendActivity();
             }else if(isMyDevice){
                 gotoMyDeviceDetailActivity();
             }
@@ -432,7 +450,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
             if (isCall) {
                 for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
                     String value = noa.getValue();
-                    BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(value, contact.getFullName(), contact.getPhotoUri());
+                    BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(value, contact.getFullName(), contact.getPhotoUri(),contact.getDevice());
                 }
             } else {
                 if (position < mContactAdapter.getItemCount() - 1) {    //最后一项不可点击
@@ -471,7 +489,7 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
     public void onResume() {
         super.onResume();
         refreshData();
-
+        getMyDeviceData();
         ContactsManager.addContactsListener(this);
 
         if (editConsumed) {
@@ -488,6 +506,21 @@ public class ContactsListFragment extends Fragment implements OnItemClickListene
         }
         invalidate();
         refresh();
+    }
+
+    private void getMyDeviceData(){
+        Cursor cursor =DataService.instance().getAccountsAndDevices(null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            mStrDeviceName = cursor.getString(com.gome.beautymirror.data.provider.DatabaseUtil.Account.COLUMN_DEVICE_NAME);
+            mBitmap = DataUtil.getImage(cursor.getBlob(DatabaseUtil.Account.COLUMN_ICON));
+        }
+        mMyDeviceName.setText(mStrDeviceName!=null && !"".equals(mStrDeviceName) ? mStrDeviceName : getString(R.string.my_device));
+        mHeadMyDeviceName.setText(mStrDeviceName!=null && !"".equals(mStrDeviceName) ? mStrDeviceName : getString(R.string.my_device));
+        if(mBitmap!=null){
+            mDevicePicture.setImageBitmap(mBitmap);
+            mHeadDevicePicture.setImageBitmap(mBitmap);
+        }
+        if (cursor != null) cursor.close();
     }
 
     @Override

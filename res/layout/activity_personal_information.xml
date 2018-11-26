@@ -21,8 +21,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
             android:layout_marginTop="-160dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginRight="@dimen/bg_card_margin"
+            android:layout_marginLeft="@dimen/bg_card_margin"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -61,8 +61,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
             android:layout_marginTop="5dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginRight="@dimen/bg_card_margin"
+            android:layout_marginLeft="@dimen/bg_card_margin"
             android:orientation="vertical">
 
             <cole.view.MyOneLineView
@@ -81,8 +81,8 @@
             android:id="@+id/reset_password"
             android:background="@drawable/bg_card"
             android:layout_marginTop="5dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginRight="@dimen/bg_card_margin"
+            android:layout_marginLeft="@dimen/bg_card_margin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

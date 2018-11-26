@@ -60,8 +60,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import com.gome.beautymirror.data.provider.DatabaseUtil;
-import com.gome.beautymirror.contacts.LinphoneContact;
 
 public class ContactsManager extends ContentObserver implements FriendListListener, LoaderManager.LoaderCallbacks<Cursor> {
     private static ContactsManager instance;
@@ -334,22 +334,44 @@ public class ContactsManager extends ContentObserver implements FriendListListen
                 com.gome.beautymirror.contacts.LinphoneContact contact = new com.gome.beautymirror.contacts.LinphoneContact();
                 contact.setAccount(c.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT));
                 String displayName = c.getString(DatabaseUtil.Friend.COLUMN_NAME);
+                String deviceId =  c.getString(DatabaseUtil.Friend.COLUMN_ID);
                 if(displayName==null || displayName.equals("")){
                     displayName=contact.getAccount();
                 }
                 contact.setFullName(displayName);
-                String letter = String.valueOf(Pinyin.toPinyin(displayName.charAt(0)).toUpperCase().charAt(0));
+                contact.addNumberOrAddress(new com.gome.beautymirror.contacts.LinphoneNumberOrAddress(contact.getAccount(), true));
+                String remarkName = c.getString(DatabaseUtil.Friend.COLUMN_COMMENT);
+                contact.setRemarkName(remarkName);
+                String letter;
+                if(remarkName!=null && !remarkName.equals("")){
+                    letter = String.valueOf(Pinyin.toPinyin(remarkName.charAt(0)).toUpperCase().charAt(0));
+                }else {
+                    letter = String.valueOf(Pinyin.toPinyin(displayName.charAt(0)).toUpperCase().charAt(0));
+                }
                 //非字母开头的统一设置成 "#"
                 if (isLetter(letter)) {
                     contact.setLetter(letter);
                 } else {
                     contact.setLetter("#");
                 }
-                contact.addNumberOrAddress(new com.gome.beautymirror.contacts.LinphoneNumberOrAddress(contact.getAccount(), true));
-                contact.setRemarkName(c.getString(DatabaseUtil.Friend.COLUMN_COMMENT));
                 contact.setIcon(c.getBlob(DatabaseUtil.Friend.COLUMN_ICON));
+                contact.setDevice(false);
                 if (!sipContacts.contains(contact)) {
                     sipContacts.add(contact);
+                    if(deviceId !=null && !deviceId.equals("")){
+                        com.gome.beautymirror.contacts.LinphoneContact contactDevice = new com.gome.beautymirror.contacts.LinphoneContact();
+                        contactDevice.setAccount(c.getString(DatabaseUtil.Friend.COLUMN_ACCOUNT));
+                        contactDevice.setFullName(displayName);
+                        contactDevice.setRemarkName(c.getString(DatabaseUtil.Friend.COLUMN_COMMENT));
+                        contactDevice.addNumberOrAddress(new com.gome.beautymirror.contacts.LinphoneNumberOrAddress(contact.getAccount(), true));
+                        contactDevice.setDevice(true);
+                        if (isLetter(letter)) {
+                            contactDevice.setLetter(letter);
+                        } else {
+                            contactDevice.setLetter("#");
+                        }
+                        sipContacts.add(contactDevice);
+                    }
                 }
             }
             mSipContacts=sipContacts;
@@ -431,14 +453,20 @@ public class ContactsManager extends ContentObserver implements FriendListListen
                 //升序排列
                 if (o1.getLetter().equals("@")
                         || o2.getLetter().equals("#")) {
+                    if(o1.getFullName().equals(o2.getFullName())){
+                        return 1;
+                    }
                     return -1;
                 } else if (o1.getLetter().equals("#")
                         || o2.getLetter().equals("@")) {
+
                     return 1;
                 }
+
                 return o1.getLetter().compareTo(o2.getLetter());
             }
         });
         return c;
     }
+
 }

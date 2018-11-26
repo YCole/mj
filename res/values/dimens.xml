@@ -11,4 +11,6 @@
     <dimen name="wp_selector_off_length">4dp</dimen>
     <integer name="locker_gallery_icon_width">180</integer>
     <integer name="locker_gallery_icon_height">180</integer>
+
+    <dimen name="bg_card_margin">8dp</dimen>
 </resources>

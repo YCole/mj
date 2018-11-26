@@ -22,5 +22,5 @@ package com.gome.beautymirror.contacts;
 import android.net.Uri;
 
 public interface ContactPicked {
-    void setAddresGoToDialerAndCall(String number, String name, Uri photo);
+    void setAddresGoToDialerAndCall(String number, String name, Uri photo,boolean isDevice);
 }

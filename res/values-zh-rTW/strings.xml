@@ -314,7 +314,7 @@
 
   <!--cole-->
   <string name="register">注册</string>
-  <string name="login">登陆</string>
+  <string name="login">登录</string>
   <string name="et_register_getphone">请输入手机号码</string>
   <string name="et_register_getcode">验证码</string>
   <string name="bt_register_getcode">获取验证码</string>

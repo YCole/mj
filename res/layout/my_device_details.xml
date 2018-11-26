@@ -25,8 +25,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="158dp"
                 android:background="@drawable/bg_card"
-                android:layout_marginRight="12dp"
-                android:layout_marginLeft="12dp"
+                android:layout_marginRight="@dimen/bg_card_margin"
+                android:layout_marginLeft="@dimen/bg_card_margin"
                 android:orientation="vertical">
 
                 <TextView
@@ -41,26 +41,41 @@
             </LinearLayout>
 
         </LinearLayout>
-
-        <com.gome.beautymirror.ui.RoundImageView
-            android:id="@+id/contact_picture"
-            android:src="@drawable/image_head"
-            android:contentDescription="@string/content_description_contact_picture"
-            android:layout_width="131dp"
-            android:layout_height="131dp"
-            android:adjustViewBounds="true"
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="-208dp"
-            imagecontrol:border_width="2dp"
-            imagecontrol:border_inside_color="@color/white"
-            android:layout_gravity="center" />
+            android:layout_gravity="center" >
+            <ImageView
+                android:layout_width="147dp"
+                android:layout_height="147dp"
+                android:layout_centerInParent="true"
+                android:src="@drawable/card_head_bg"/>
+
+            <com.gome.beautymirror.ui.RoundImageView
+                android:id="@+id/contact_picture"
+                android:background="@drawable/image_head"
+                android:contentDescription="@string/content_description_contact_picture"
+                android:layout_centerInParent="true"
+                android:layout_width="129dp"
+                android:layout_height="129dp"
+                android:adjustViewBounds="true" />
+
+            <ImageView
+                android:layout_width="144dp"
+                android:layout_height="144dp"
+                android:layout_centerInParent="true"
+                android:src="@drawable/card_head_bg_line"/>
+
+        </RelativeLayout>
 
         <LinearLayout
-            android:layout_marginTop="82dp"
+            android:layout_marginTop="66dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
-            android:layout_marginRight="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginRight="@dimen/bg_card_margin"
+            android:layout_marginLeft="@dimen/bg_card_margin"
             android:orientation="vertical">
 
             <LinearLayout
@@ -119,8 +134,8 @@
             android:id="@+id/recent_call"
             android:layout_width="match_parent"
             android:layout_marginTop="5dp"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
+            android:layout_marginLeft="@dimen/bg_card_margin"
+            android:layout_marginRight="@dimen/bg_card_margin"
             android:layout_height="50dp"
             android:background="@drawable/bg_card"
             android:orientation="horizontal">

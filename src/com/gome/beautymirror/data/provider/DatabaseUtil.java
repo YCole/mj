@@ -173,6 +173,7 @@ public final class DatabaseUtil {
 
         public static final int STATUS_UNKNOW = 0;
         public static final int STATUS_FRIEND = 1;
+        public static final int STATUS_REQUEST = 2;
         public static final int STATUS_DEFAULT = STATUS_UNKNOW;
 
         public static final String CREATE = "CREATE TABLE IF NOT EXISTS " + Tables.PEOPLES + " ("
@@ -203,11 +204,16 @@ public final class DatabaseUtil {
         public static final String REQUEST_TIME = "request_time";
         public static final String MESSAGE = "message";
         public static final String STATUS = "status";
+        public static final String READ = "read";
 
         public static final int STATUS_NEW = 0;
         public static final int STATUS_FRIEND = 1;
         public static final int STATUS_IGNORE = 2;
         public static final int STATUS_DEFAULT = STATUS_NEW;
+
+        public static final int READ_NEW = 0;
+        public static final int READ_OLD = 1;
+        public static final int READ_DEFAULT = READ_NEW;
 
         public static final String CREATE = "CREATE TABLE IF NOT EXISTS " + Tables.PROPOSERS + " ("
                 + ACCOUNT + " TEXT PRIMARY KEY, "
@@ -216,7 +222,8 @@ public final class DatabaseUtil {
                 + TIME + " LONG NOT NULL DEFAULT 0, "
                 + REQUEST_TIME + " LONG NOT NULL DEFAULT 0, "
                 + MESSAGE + " TEXT, "
-                + STATUS + " INTEGER NOT NULL DEFAULT " + STATUS_DEFAULT + ");";
+                + STATUS + " INTEGER NOT NULL DEFAULT " + STATUS_DEFAULT + ", "
+                + READ + " INTEGER NOT NULL DEFAULT " + READ_DEFAULT + ");";
 
         public static final int COLUMN_ACCOUNT = 0;
         public static final int COLUMN_NAME = 1;
@@ -225,6 +232,7 @@ public final class DatabaseUtil {
         public static final int COLUMN_REQUEST_TIME = 4;
         public static final int COLUMN_MESSAGE = 5;
         public static final int COLUMN_STATUS = 6;
+        public static final int COLUMN_READ = 7;
     }
     /* } */
 

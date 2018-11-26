@@ -383,14 +383,18 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                         try {
                             if (object.get("resCode").equals("000")) {
                                 inputAnimator(mLogin, mWidth, mHeight);
-                                longToast("登陆成功");
-                                startActivity(new Intent(LoginActivity.this, BindDeviceActivity.class));
+                                longToast("登录成功");
+                                if (TextUtils.isEmpty(DataService.instance().getDevice(null))) {
+                                    startActivity(new Intent(LoginActivity.this, BindDeviceActivity.class));
+                                }
                                 finish();
                                 RigisterAndLoginMainActivity.quit();
                             } else if (object.get("resCode").equals("111")) {
-                                longToast("登陆失败");
+                                longToast("登录失败");
                             } else if (object.get("resCode").equals("333")) {
                                 longToast("账号密码错误");
+                            } else {
+                                longToast(object.get("resCode") + "错误");
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();

@@ -288,19 +288,23 @@ public class HistoryListFragment extends Fragment implements OnClickListener, On
         } else {
             if (BeautyMirrorActivity.isInstanciated()) {
                 String address="";
+                boolean isDevice;
                 if(isVedioCall){
                     if(mLogs.get(position) instanceof CallLog){
                         address = ((CallLog) mLogs.get(position)).mAccount;
+                        isDevice = ((CallLog) mLogs.get(position)).mId != null && !((CallLog) mLogs.get(position)).mId.equals("");
                     }else {
                         address = ((Information) mLogs.get(position)).mAccount;
+                        isDevice = ((Information) mLogs.get(position)).mId != null && !((Information) mLogs.get(position)).mId.equals("");
                     }
                     LinphoneUtils.setInitiateVideoCall(true);
-                    BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null);
+                    BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null,isDevice);
                 }else{
                     if(mLogs.get(position) instanceof CallLog){
                         address = ((CallLog) mLogs.get(position)).mAccount;
                         LinphoneUtils.setInitiateVideoCall(true);
-                        BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null);
+                        isDevice = ((CallLog) mLogs.get(position)).mId != null && !((CallLog) mLogs.get(position)).mId.equals("");
+                        BeautyMirrorActivity.instance().setAddresGoToDialerAndCall(address, null, null,isDevice);
                     }else {
                         address = ((Information) mLogs.get(position)).mAccount;
                         LinphoneContact contact = ContactsManager.getInstance().getContactFromAccount(address);

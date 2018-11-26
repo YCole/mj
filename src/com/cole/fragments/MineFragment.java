@@ -157,7 +157,7 @@ public class MineFragment extends Fragment {
         gotoEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(getContext(), PersonalInformationActivity.class));
+               startActivity(new Intent(getContext(), PersonalInformationActivity.class));
             }
         });
         mMyDevices.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {
@@ -169,17 +169,7 @@ public class MineFragment extends Fragment {
         mUses.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {
             @Override
             public void onRootClick(View view) {
-                Intent intent = new Intent();
 
-                if (Build.VERSION.SDK_INT < 19) {
-                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                    intent.setType("image/*");
-                } else {
-                    intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-                }
-                startActivityForResult(intent, 1);
             }
         }, 3);
         mAbout.setOnRootClickListener(new MyOneLineView.OnRootClickListener() {

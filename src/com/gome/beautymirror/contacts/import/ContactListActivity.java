@@ -1,18 +1,13 @@
 package com.gome.beautymirror.contacts;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,9 +16,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -33,7 +25,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
-import android.provider.Settings;
 
 import com.gome.beautymirror.R;
 
@@ -45,7 +36,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import com.gome.beautymirror.activities.ContactDetailsActivity;
 
-import com.gome.beautymirror.contacts.StrangerActivity;
 import com.gome.beautymirror.data.DataService;
 import com.gome.beautymirror.data.DataThread;
 import com.gome.beautymirror.activities.BaseStatusBarActivity;
@@ -66,13 +56,14 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
     private ImageView mClearBtn, mSearchClearNum;
     private ArrayList<com.gome.beautymirror.contacts.ContactInfo> mSearchList;
     private ContactAdapter mContactAdapter;
-    TextView mTvTitleName , mCancleSearch , mSearchText;
+    TextView mTvTitleName , mCancleSearch ,mCancleSearchPhone, mSearchText;
     ImageView mBtBack;
     RelativeLayout mRLSearchPhonenumber ;
     LinearLayout mRlMainSearchView;
-    LinearLayout mMainContent, mActionBar, mSearchRoot, mNoContact, mSearchBar, mNoUser,mNoPermission,mLlSearch;
+    LinearLayout mMainContent, mActionBar, mSearchRoot, mNoContact, mSearchBar, mNoUser,mNoPermission, mNoSearchResult, mLlSearch,mLlMain;
     FrameLayout mListLayout;
     TextView mGotoSettings;
+    LinearLayout.LayoutParams lp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +91,7 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
             mListLayout.setVisibility(View.GONE);
             mNoContact.setVisibility(View.GONE);
             mProgressBar.setVisibility(View.GONE);
+            mNoSearchResult.setVisibility(View.GONE);
         }
     }
 
@@ -152,6 +144,7 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
         mBtBack = findViewById(R.id.bt_back);
         mRLSearchPhonenumber =findViewById(R.id.rl_search_phonenumber);
         mRlMainSearchView =findViewById(R.id.main_search_view);
+        mCancleSearchPhone =findViewById(R.id.bt_cancle_search_phone);
         mCancleSearch =findViewById(R.id.bt_cancle_search);
         mMainContent=findViewById(R.id.main_content);
         mSearchNumBox=findViewById(R.id.et_search_number);
@@ -172,13 +165,14 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
         mListLayout =  findViewById(R.id.list_layout);
         mNoContact =  findViewById(R.id.no_register_user);
         mNoPermission = findViewById(R.id.no_permission);
+        mNoSearchResult= findViewById(R.id.no_search_result);
 
         mNoUser =  findViewById(R.id.no_User);
 
         mGotoSettings = findViewById(R.id.goto_settings);
         mSearchText = findViewById(R.id.search_text);
         mLlSearch = findViewById(R.id.ll_search);
-
+        mLlMain = findViewById(R.id.ll_main);
     }
 
     @Override
@@ -191,9 +185,11 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
         }else if (v.getId() == R.id.rl_search_phonenumber) {
             mMainContent.setVisibility(View.GONE);
             mRlMainSearchView.setVisibility(View.VISIBLE);
-        }else if (v.getId() == R.id.bt_cancle_search) {
+        }else if (v.getId() == R.id.bt_cancle_search_phone) {
             mMainContent.setVisibility(View.VISIBLE);
             mRlMainSearchView.setVisibility(View.GONE);
+        }else if (v.getId() == R.id.bt_cancle_search) {
+            mSearchBox.setText("");
         }else if (v.getId() == R.id.search_clear_num) {
             mSearchNumBox.setText("");
             mSearchClearNum.setVisibility(View.GONE);
@@ -266,6 +262,7 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
         mBtBack.setOnClickListener(this);
         mRLSearchPhonenumber.setOnClickListener(this);
         mCancleSearch .setOnClickListener(this);
+        mCancleSearchPhone.setOnClickListener(this);
         mSearchClearNum.setOnClickListener(this);
         mGotoSettings.setOnClickListener(this);
         mLlSearch.setOnClickListener(this);
@@ -306,19 +303,40 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
             @Override
             public void afterTextChanged(Editable s) {
                 String searchKey = s.toString().trim();
-
                     if (mContactList.size() == 0) return;
 
                     mSearchList.clear();
                     searchContacts(searchKey);
+                    lp = (LinearLayout.LayoutParams) mLlMain.getLayoutParams();
                     if (TextUtils.isEmpty(searchKey)) {
                         mClearBtn.setVisibility(View.GONE);
                         mSearchList.clear();
                         mContactAdapter.setContactList(mContactList);
+                        mRLSearchPhonenumber.setVisibility(View.VISIBLE);
+                        mBtBack.setVisibility(View.VISIBLE);
+                        mTvTitleName.setVisibility(View.VISIBLE);
+                        lp.topMargin = -(int)dpToPx(116);
+                        mListLayout.setVisibility(mContactList.isEmpty()? View.GONE:View.VISIBLE);
+                        mCancleSearch.setVisibility(View.GONE);
                     } else {
+                        mRLSearchPhonenumber.setVisibility(View.GONE);
                         mClearBtn.setVisibility(View.VISIBLE);
                         mContactAdapter.setContactList(mSearchList);
+                        mBtBack.setVisibility(View.GONE);
+                        mTvTitleName.setVisibility(View.GONE);
+                        lp.topMargin = -(int)dpToPx(160);
+                        mListLayout.setVisibility(mSearchList.isEmpty()? View.GONE:View.VISIBLE);
+                        if(mSearchList.isEmpty()){
+                            mNoSearchResult.setVisibility(View.VISIBLE);
+                            mListLayout.setVisibility( View.GONE);
+                        }else{
+                            mNoSearchResult.setVisibility(View.GONE);
+                            mListLayout.setVisibility( View.VISIBLE);
+                        }
+                        mCancleSearch.setVisibility(View.VISIBLE);
                     }
+                mLlMain.setLayoutParams(lp);
+
             }
         });
         //联系人未获取到之前搜索不可用
@@ -333,12 +351,17 @@ public class ContactListActivity extends BaseStatusBarActivity implements View.O
 
     }
 
+    private float dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return dp * density;
+    }
+
     private void showConfirmationDialog(final String account) {
         final View view= LayoutInflater.from(this).inflate(R.layout.dialog_add_friend, null);
         final TextView cancel =view.findViewById(R.id.choosepage_cancel);
         final TextView sure =view.findViewById(R.id.choosepage_sure);
         final EditText edittext =view.findViewById(R.id.choosepage_edittext);
-        new BlurDialog(this,true){
+        new BlurDialog(this,false){
             @Override
             protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);

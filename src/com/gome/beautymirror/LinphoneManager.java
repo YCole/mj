@@ -420,10 +420,15 @@ public class LinphoneManager implements CoreListener, SensorEventListener, Accou
 
     public void newOutgoingCall(AddressType address) {
         String to = address.getText().toString();
-        newOutgoingCall(to, address.getDisplayedName());
+        newOutgoingCall(to, address.getDisplayedName(),false);
     }
 
-    public void newOutgoingCall(String to, String displayName) {
+    public void newOutgoingCall(AddressType address,boolean isDevice) {
+        String to = address.getText().toString();
+        newOutgoingCall(to, address.getDisplayedName(),isDevice);
+    }
+
+    public void newOutgoingCall(String to, String displayName,boolean isDevice) {
 //      if (mLc.inCall()) {
 //          listenerDispatcher.tryingNewOutgoingCallButAlreadyInCall();
 //          return;
@@ -437,7 +442,11 @@ public class LinphoneManager implements CoreListener, SensorEventListener, Accou
                 null);
         if (cursor != null && cursor.moveToFirst()) {
             mLc.setCallLogsFriend(to, cursor.getString(DatabaseUtil.Friend.COLUMN_ID));
-            to = cursor.getString(DatabaseUtil.Friend.COLUMN_SIP);
+            if(isDevice){
+                to = cursor.getString(DatabaseUtil.Friend.COLUMN_DEVICE_SIP);
+            }else {
+                to = cursor.getString(DatabaseUtil.Friend.COLUMN_SIP);
+            }
         }
         if (cursor != null) cursor.close();
         if (to == null) return;
